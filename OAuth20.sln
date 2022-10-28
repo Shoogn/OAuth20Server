@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32901.215
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OAuth20.Server", "..\OAuth20\OAuth20.Server\OAuth20.Server.csproj", "{0F174923-A56F-45F7-86A5-9201EB65F3F2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0F174923-A56F-45F7-86A5-9201EB65F3F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0F174923-A56F-45F7-86A5-9201EB65F3F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0F174923-A56F-45F7-86A5-9201EB65F3F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F174923-A56F-45F7-86A5-9201EB65F3F2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7D43B27E-F863-4832-9539-CCBFBB619BB6}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,44 @@
+﻿@model OAuth20.Server.OauthRequest.OpenIdConnectLoginRequest
+@{
+    ViewData["Title"] = "Login";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1>Login - Page</h1>
+
+<div class="row">
+    @foreach (var i in Model.RequestedScopes)
+    {
+        <p>@i</p>
+    }
+
+
+    <div class="col-12">
+        <form asp-action="Login" asp-controller="Home" method="post">
+            <input type="hidden" asp-for="RedirectUri" />
+            <input type="hidden" asp-for="Code" />
+            <input type="hidden" asp-for="Nonce" />
+
+            @for (int i = 0; i < Model.RequestedScopes.Count; i++)
+            {
+                <input type="hidden" asp-for="RequestedScopes[i]" />
+            }
+
+
+            <div class="col-md-6">
+                <label>User Name</label>
+                <input type="text" asp-for="UserName" class="form-control" />
+            </div>
+
+            <div class="col-md-6">
+                <label>Password</label>
+                <input type="text" asp-for="Password" class="form-control" />
+            </div>
+
+
+            <div class="col-md-6">
+                <input type="submit" value="Login" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
