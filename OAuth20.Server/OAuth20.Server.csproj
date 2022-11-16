@@ -11,8 +11,6 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.24.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="wwwroot\" />
-  </ItemGroup>
+  <ProjectExtensions><VisualStudio><UserProperties wwwroot_4jwks_1json__JsonSchema="array" /></VisualStudio></ProjectExtensions>
 
 </Project>

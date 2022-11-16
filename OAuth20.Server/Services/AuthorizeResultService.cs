@@ -1,25 +1,24 @@
 ﻿using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
-using NuGet.Common;
 using OAuth20.Server.Common;
 using OAuth20.Server.Models;
 using OAuth20.Server.OauthRequest;
 using OAuth20.Server.OauthResponse;
 using OAuth20.Server.Services.CodeServce;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
-using System.Text;
+using System.Security.Cryptography;
 
 namespace OAuth20.Server.Services
 {
     public class AuthorizeResultService : IAuthorizeResultService
     {
-        private static string keyAlg = "66007d41-6924-49f2-ac0c-e63c4b1a1730";
+        // for encrypted key see: https://stackoverflow.com/questions/18223868/how-to-encrypt-jwt-security-token
         private readonly ClientStore _clientStore = new ClientStore();
         private readonly ICodeStoreService _codeStoreService;
         public AuthorizeResultService(ICodeStoreService codeStoreService)
@@ -101,8 +100,6 @@ namespace OAuth20.Server.Services
         }
 
 
-
-
         private CheckClientResult VerifyClientById(string clientId, bool checkWithSecret = false, string clientSecret = null)
         {
             CheckClientResult result = new CheckClientResult() { IsSuccess = false };
@@ -179,53 +176,66 @@ namespace OAuth20.Server.Services
 
             // Now here I will Issue the Id_token
 
-            JwtSecurityToken id_token = null;
+            string id_token = string.Empty;
             if (clientCodeChecker.IsOpenId)
             {
                 // Generate Identity Token
-
                 int iat = (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
-                
-
                 string[] amrs = new string[] { "pwd" };
 
-                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyAlg));
-                var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                RSACryptoServiceProvider provider = new RSACryptoServiceProvider();
+
+                string publicPrivateKey = File.ReadAllText("PublicPrivateKey.xml");
+                provider.FromXmlString(publicPrivateKey);
+
+                RsaSecurityKey rsaSecurityKey = new RsaSecurityKey(provider);
 
                 var claims = new List<Claim>()
-                {
-                    new Claim("sub", "856933325856"),
-                    new Claim("given_name", "Mohammed Ahmed Hussien"),
-                    new Claim("iat", iat.ToString(), ClaimValueTypes.Integer), // time stamp
-                    new Claim("nonce", clientCodeChecker.Nonce)
-                };
+                    {
+                        new Claim("sub", "856933325856"),
+                        new Claim("given_name", "Mohammed Ahmed Hussien"),
+                        new Claim("iat", iat.ToString(), ClaimValueTypes.Integer), // time stamp
+                        new Claim("nonce", clientCodeChecker.Nonce)
+                    };
                 foreach (var amr in amrs)
-                    claims.Add(new Claim("amr", amr));// authentication method reference 
+                    claims.Add(new Claim("amr", amr));// authentication
 
-                id_token = new JwtSecurityToken("https://localhost:7275", request.ClientId, claims, signingCredentials: credentials,
-                    expires: DateTime.UtcNow.AddMinutes(
-                       int.Parse("5")));
+                JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
+
+                var token = new JwtSecurityToken("https://localhost:7275", checkClientResult.Client.ClientId, claims,
+                    expires: DateTime.UtcNow.AddMinutes(int.Parse("5")), signingCredentials: new
+                    SigningCredentials(rsaSecurityKey, SecurityAlgorithms.RsaSha256));
+
+                id_token = handler.WriteToken(token);
 
             }
 
             // Here I have to generate access token 
-            var key_at = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyAlg));
-            var credentials_at = new SigningCredentials(key_at, SecurityAlgorithms.HmacSha256);
-
             var claims_at = new List<Claim>();
-         
 
-            var access_token = new JwtSecurityToken("https://localhost:7275", request.ClientId, claims_at, signingCredentials: credentials_at,
-                expires: DateTime.UtcNow.AddMinutes(
-                   int.Parse("5")));
+            string access_token = string.Empty;
+            RSACryptoServiceProvider provider1 = new RSACryptoServiceProvider();
 
-            // here remoce the code from the Concurrent Dictionary
+            string publicPrivateKey1 = File.ReadAllText("PublicPrivateKey.xml");
+            provider1.FromXmlString(publicPrivateKey1);
+
+            RsaSecurityKey rsaSecurityKey1 = new RsaSecurityKey(provider1);
+            JwtSecurityTokenHandler handler1 = new JwtSecurityTokenHandler();
+
+            var token1 = new JwtSecurityToken("https://localhost:7275", checkClientResult.Client.ClientUri, claims_at,
+                expires: DateTime.UtcNow.AddMinutes(int.Parse("5")), signingCredentials: new
+                SigningCredentials(rsaSecurityKey1, SecurityAlgorithms.RsaSha256));
+
+            access_token = handler1.WriteToken(token1);
+
+
+            // here remove the code from the Concurrent Dictionary
             _codeStoreService.RemoveClientDataByCode(request.Code);
 
             return new TokenResponse
             {
-                access_token = new JwtSecurityTokenHandler().WriteToken(access_token),
-                id_token = id_token != null ? new JwtSecurityTokenHandler().WriteToken(id_token) : null,
+                access_token = access_token,
+                id_token = id_token,
                 code = request.Code
             };
         }
