@@ -17,7 +17,6 @@ namespace OAuth20.Server.OauthResponse
         public string RedirectUri { get; set; }
         public IList<string> RequestedScopes { get; set; }
         public string GrantType { get; set; }
-        public string Nonce { get; set; }
         public string Error { get; set; } = string.Empty;
         public string ErrorUri { get; set; }
         public string ErrorDescription { get; set; }

@@ -42,6 +42,7 @@ namespace OAuth20.Server.Controllers
             return Json(response);
         }
 
+        // jwks.json
         [HttpGet("~/jwks.json")]
         public FileResult Jwks()
         {

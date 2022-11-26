@@ -16,9 +16,9 @@ namespace OAuth20.Server.Services.CodeServce
         // Here I genrate the code for authorization, and I will store it 
         // in the Concurrent Dictionary
 
-        public string GenerateAuthorizationCode(string clientId, IList<string> requestedScope)
+        public string GenerateAuthorizationCode(string clientId, string nonce, IList<string> requestedScope)
         {
-            var client = _clientStore.Clients.Where(x => x.ClientId == clientId).FirstOrDefault();
+            var client = _clientStore.Clients.Where(x => x.ClientId == clientId).SingleOrDefault();
 
             if(client != null)
             {
@@ -29,6 +29,7 @@ namespace OAuth20.Server.Services.CodeServce
                     ClientId = clientId,
                     RedirectUri = client.RedirectUri,
                     RequestedScopes = requestedScope,
+                    Nonce = nonce
                 };
 
                 // then store the code is the Concurrent Dictionary
@@ -55,7 +56,7 @@ namespace OAuth20.Server.Services.CodeServce
         // and check the user credienail first
         // But here I merge this process here inside update Concurrent Dictionary method
         public AuthorizationCode UpdatedClientDataByCode(string key, IList<string> requestdScopes,
-            string userName, string password = null, string nonce = null)
+            string userName, string password = null)
         {
             var oldValue = GetClientDataByCode(key);
 
@@ -80,7 +81,7 @@ namespace OAuth20.Server.Services.CodeServce
                         IsOpenId = requestdScopes.Contains("openId") || requestdScopes.Contains("profile"),
                         RedirectUri = oldValue.RedirectUri,
                         RequestedScopes = requestdScopes,
-                        Nonce = nonce
+                        Nonce = oldValue.Nonce
                     };
 
 

@@ -34,10 +34,7 @@ namespace OAuth20.Server.Controllers
                 RedirectUri = result.RedirectUri,
                 Code = result.Code,
                 RequestedScopes = result.RequestedScopes,
-                Nonce = result.Nonce
             };
-
-
             return View("Login", loginModel);
         }
 
@@ -54,14 +51,14 @@ namespace OAuth20.Server.Controllers
             // and I will show you how to integrate the ASP.NET Core Identity
             // With our framework
 
-            var result = _codeStoreService.UpdatedClientDataByCode(loginRequest.Code, loginRequest.RequestedScopes,
-                loginRequest.UserName, nonce: loginRequest.Nonce);
+            var result = _codeStoreService.UpdatedClientDataByCode(loginRequest.Code, loginRequest.RequestedScopes, loginRequest.UserName);
             if (result != null)
             {
-
                 loginRequest.RedirectUri = loginRequest.RedirectUri + "&code=" + loginRequest.Code;
                 return Redirect(loginRequest.RedirectUri);
             }
+
+
             return RedirectToAction("Error", new { error = "invalid_request" });
         }
 

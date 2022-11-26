@@ -1,12 +1,15 @@
 ﻿using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OAuth20.Server.Common;
+using OAuth20.Server.Configuration;
 using OAuth20.Server.Models;
 using OAuth20.Server.OauthRequest;
 using OAuth20.Server.OauthResponse;
 using OAuth20.Server.Services.CodeServce;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
@@ -21,9 +24,12 @@ namespace OAuth20.Server.Services
         // for encrypted key see: https://stackoverflow.com/questions/18223868/how-to-encrypt-jwt-security-token
         private readonly ClientStore _clientStore = new ClientStore();
         private readonly ICodeStoreService _codeStoreService;
-        public AuthorizeResultService(ICodeStoreService codeStoreService)
+        private readonly OAuthOptions _options;
+
+        public AuthorizeResultService(ICodeStoreService codeStoreService, IOptions<OAuthOptions> options)
         {
             _codeStoreService = codeStoreService;
+            _options = options.Value;
         }
         public AuthorizeResponse AuthorizeRequest(IHttpContextAccessor httpContextAccessor, AuthorizationRequest authorizationRequest)
         {
@@ -76,13 +82,13 @@ namespace OAuth20.Server.Services
                 return response;
             }
 
-            string nonce = httpContextAccessor.HttpContext.Request.Query["nonce"].ToString();
+            string nonce = authorizationRequest.nonce;
 
             // Verify that a scope parameter is present and contains the openid scope value.
             // (If no openid scope value is present,
             // the request may still be a valid OAuth 2.0 request, but is not an OpenID Connect request.)
 
-            string code = _codeStoreService.GenerateAuthorizationCode(authorizationRequest.client_id, clientScopes.ToList());
+            string code = _codeStoreService.GenerateAuthorizationCode(authorizationRequest.client_id, nonce, clientScopes.ToList());
             if (code == null)
             {
                 response.Error = ErrorTypeEnum.TemporarilyUnAvailable.GetEnumDescription();
@@ -93,7 +99,6 @@ namespace OAuth20.Server.Services
             response.Code = code;
             response.State = authorizationRequest.state;
             response.RequestedScopes = clientScopes.ToList();
-            response.Nonce = nonce;
 
             return response;
 
@@ -158,6 +163,7 @@ namespace OAuth20.Server.Services
             {
                 return new TokenResponse { Error = checkClientResult.Error, ErrorDescription = checkClientResult.ErrorDescription };
             }
+          
 
             // check code from the Concurrent Dictionary
             var clientCodeChecker = _codeStoreService.GetClientDataByCode(request.Code);

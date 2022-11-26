@@ -17,7 +17,6 @@
         <form asp-action="Login" asp-controller="Home" method="post">
             <input type="hidden" asp-for="RedirectUri" />
             <input type="hidden" asp-for="Code" />
-            <input type="hidden" asp-for="Nonce" />
 
             @for (int i = 0; i < Model.RequestedScopes.Count; i++)
             {
