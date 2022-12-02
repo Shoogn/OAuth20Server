@@ -1,0 +1,33 @@
+﻿
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row event_page">
+
+
+    <div class="col-md-8 p-4">
+        <h2>About Current User</h2>
+        @if (User?.Identity?.IsAuthenticated ?? false)
+        {
+            <div class="container">
+                <div class="alert alert-success alert-dismissible mt-3">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    <strong>Success!</strong> You are authenticated successfully!
+                </div>
+            </div>
+
+
+            <p>@User.Identity.Name</p>
+
+            <p>Date: DEC 26, 2022</p>
+        }
+        else
+        {
+            <p>Oppp you are not authenticated!</p>
+
+        }
+    </div>
+
+</div>

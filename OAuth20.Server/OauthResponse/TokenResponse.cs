@@ -26,10 +26,9 @@ namespace OAuth20.Server.OauthResponse
         /// </summary>
         public string code { get; set; }
 
-
-
-        // For Error Details if any
-
+        /// <summary>
+        /// For Error Details if any
+        /// </summary>
         public string Error { get; set; } = string.Empty;
         public string ErrorUri { get; set; }
         public string ErrorDescription { get; set; }

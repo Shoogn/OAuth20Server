@@ -21,6 +21,10 @@ namespace OAuth20.Server.Controllers
             _codeStoreService = codeStoreService;
         }
 
+        public IActionResult Index()
+        {
+            return View();
+        }
 
         public IActionResult Authorize(AuthorizationRequest authorizationRequest)
         {

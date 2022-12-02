@@ -1,5 +1,8 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,6 +11,8 @@ using OAuth20.Server.Models.Context;
 using OAuth20.Server.Models.Entities;
 using OAuth20.Server.Services;
 using OAuth20.Server.Services.CodeServce;
+using OAuth20.Server.Services.Users;
+using System;
 
 var builder = WebApplication.CreateBuilder(args);
 var configServices = builder.Configuration;
@@ -17,27 +22,40 @@ builder.Services.AddDbContext<BaseDBContext>(op =>
     op.UseSqlServer(connectionString);
 });
 
-builder.Services.Configure<OAuthOptions>(configServices.GetSection("OAuthOptions"));
-builder.Services.AddScoped<IAuthorizeResultService, AuthorizeResultService>();
-builder.Services.AddSingleton<ICodeStoreService, CodeStoreService>();
-builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 {
     options.SignIn.RequireConfirmedEmail = false;
     options.Password.RequireDigit = true;
     options.Password.RequireLowercase = true;
-    options.Password.RequiredLength = 5;
+    options.Password.RequiredLength = 8;
     options.Password.RequireUppercase = false;
     options.Password.RequireNonAlphanumeric = false;
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.User.RequireUniqueEmail = true;
-}).AddEntityFrameworkStores<BaseDBContext>()
-.AddRoles<IdentityRole>()
-.AddDefaultTokenProviders();
+}).AddRoles<IdentityRole>().AddEntityFrameworkStores<BaseDBContext>();
 
-builder.Services.AddAuthentication();
+builder.Services.AddAuthentication().AddCookie();
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Accounts/Login";
+    options.AccessDeniedPath = "/Accounts/AccessDenied";
+    options.ExpireTimeSpan = TimeSpan.FromHours(2);
+});
+
+
+builder.Services.Configure<OAuthOptions>(configServices.GetSection("OAuthOptions"));
+builder.Services.AddScoped<IAuthorizeResultService, AuthorizeResultService>();
+builder.Services.AddSingleton<ICodeStoreService, CodeStoreService>();
+builder.Services.AddScoped<IUserManagerService, UserManagerService>();
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.Configure<RouteOptions>(options =>
+{
+    options.LowercaseQueryStrings = true;
+    options.LowercaseUrls = true;
+});
 builder.Services.AddControllersWithViews();
 var app = builder.Build();
 
