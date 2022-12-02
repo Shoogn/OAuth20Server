@@ -4,7 +4,7 @@
     public class OAuthOptions
     {
         /// <summary>
-        /// Ti indicate which provider out identity provider will use
+        /// This indicate which provider our identity provider will use
         /// InMemoey Or BackStore
         /// </summary>
         public string Provider { get; set; }

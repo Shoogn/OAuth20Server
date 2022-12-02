@@ -19,24 +19,7 @@ namespace OAuth20.Server.Models
 
         public ClaimsPrincipal Subject { get; set; }
         public string Nonce { get; set; }
-
-        public string SubjectId
-        {
-            get
-            {
-                var data = Subject.Identity as ClaimsIdentity;
-
-                var claim = data.FindFirst("sub");
-                if(claim != null)
-                {
-                    return claim.Value;
-                }
-                else
-                {
-                    return null;
-                }
-                
-            }
-        }
+        public string CodeChallenge { get; set; }
+        public string CodeChallengeMethod { get; set; }
     }
 }

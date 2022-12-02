@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -16,6 +17,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace OAuth20.Server.Services
 {
@@ -88,7 +90,18 @@ namespace OAuth20.Server.Services
             // (If no openid scope value is present,
             // the request may still be a valid OAuth 2.0 request, but is not an OpenID Connect request.)
 
-            string code = _codeStoreService.GenerateAuthorizationCode(authorizationRequest.client_id, nonce, clientScopes.ToList());
+            var authoCode = new AuthorizationCode
+            {
+                ClientId = authorizationRequest.client_id,
+                RedirectUri = authorizationRequest.redirect_uri,
+                RequestedScopes = clientScopes.ToList(),
+                Nonce = nonce,
+                CodeChallenge = authorizationRequest.code_challenge,
+                CodeChallengeMethod = authorizationRequest.code_challenege_method,
+                CreationTime = DateTime.UtcNow
+            };
+
+            string code = _codeStoreService.GenerateAuthorizationCode(authoCode);
             if (code == null)
             {
                 response.Error = ErrorTypeEnum.TemporarilyUnAvailable.GetEnumDescription();
@@ -101,7 +114,6 @@ namespace OAuth20.Server.Services
             response.RequestedScopes = clientScopes.ToList();
 
             return response;
-
         }
 
 
@@ -180,6 +192,17 @@ namespace OAuth20.Server.Services
             // also I have to check the rediret uri 
 
 
+            // Check Pkce
+
+            if (checkClientResult.Client.UsePkce)
+            {
+                var pkceResult = codeVerifierIsSendByTheClientThatReceivedTheCode(request.CodeVerifier,
+                    clientCodeChecker.CodeChallenge, clientCodeChecker.CodeChallengeMethod);
+
+                if(!pkceResult)
+                    return new TokenResponse { Error = ErrorTypeEnum.InvalidGrant.GetEnumDescription() };
+            }
+
             // Now here I will Issue the Id_token
 
             string id_token = string.Empty;
@@ -244,6 +267,27 @@ namespace OAuth20.Server.Services
                 id_token = id_token,
                 code = request.Code
             };
+        }
+
+
+
+        private bool codeVerifierIsSendByTheClientThatReceivedTheCode(string codeVerifier, string codeChallenge, string codeChallengeMethod)
+        {
+            var odeVerifireAsByte = Encoding.ASCII.GetBytes(codeVerifier);
+
+            if (codeChallengeMethod == Constants.Plain)
+            {
+                using var shaPalin = SHA256.Create();
+                var computedHashPalin = shaPalin.ComputeHash(odeVerifireAsByte);
+                var tranformedResultPalin = Base64UrlEncoder.Encode(computedHashPalin);
+                return tranformedResultPalin.Equals(codeChallenge);
+            }
+
+            using var shaS256 = SHA256.Create();
+            var computedHashS256 = shaS256.ComputeHash(odeVerifireAsByte);
+            var tranformedResultS256 = Base64UrlEncoder.Encode(computedHashS256);
+
+            return tranformedResultS256.Equals(codeChallenge);
         }
     }
 }

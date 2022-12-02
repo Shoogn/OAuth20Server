@@ -15,7 +15,8 @@ namespace OAuth20.Server.Models
                 GrantType = GrantTypes.Code,
                 IsActive = true,
                 ClientUri = "https://localhost:7026",
-                RedirectUri = "https://localhost:7026/signin-oidc"
+                RedirectUri = "https://localhost:7026/signin-oidc",
+                UsePkce = true,
             }
         };
     }

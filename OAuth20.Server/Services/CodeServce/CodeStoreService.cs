@@ -1,10 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.IdentityModel.Tokens;
 using OAuth20.Server.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Security.Policy;
 
 namespace OAuth20.Server.Services.CodeServce
 {
@@ -16,29 +19,22 @@ namespace OAuth20.Server.Services.CodeServce
         // Here I genrate the code for authorization, and I will store it 
         // in the Concurrent Dictionary
 
-        public string GenerateAuthorizationCode(string clientId, string nonce, IList<string> requestedScope)
+        public string GenerateAuthorizationCode(AuthorizationCode authorizationCode)
         {
-            var client = _clientStore.Clients.Where(x => x.ClientId == clientId).SingleOrDefault();
+            var client = _clientStore.Clients.Where(x => x.ClientId == authorizationCode.ClientId).SingleOrDefault();
 
-            if(client != null)
+            if (client != null)
             {
-                var code = Guid.NewGuid().ToString();
+                var rand = RandomNumberGenerator.Create();
+                byte[] bytes = new byte[32];
+                rand.GetBytes(bytes);
+                var code = Base64UrlEncoder.Encode(bytes);
 
-                var authoCode = new AuthorizationCode
-                {
-                    ClientId = clientId,
-                    RedirectUri = client.RedirectUri,
-                    RequestedScopes = requestedScope,
-                    Nonce = nonce
-                };
-
-                // then store the code is the Concurrent Dictionary
-                _codeIssued[code] = authoCode;
+                _codeIssued[code] = authorizationCode;
 
                 return code;
             }
             return null;
-
         }
 
         public AuthorizationCode GetClientDataByCode(string key)
@@ -81,7 +77,9 @@ namespace OAuth20.Server.Services.CodeServce
                         IsOpenId = requestdScopes.Contains("openId") || requestdScopes.Contains("profile"),
                         RedirectUri = oldValue.RedirectUri,
                         RequestedScopes = requestdScopes,
-                        Nonce = oldValue.Nonce
+                        Nonce = oldValue.Nonce,
+                        CodeChallenge = oldValue.CodeChallenge,
+                        CodeChallengeMethod = oldValue.CodeChallengeMethod
                     };
 
 

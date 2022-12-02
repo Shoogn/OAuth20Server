@@ -40,5 +40,15 @@ namespace OAuth20.Server.OauthRequest
         /// after generating the identity_token
         /// </summary>
         public string nonce { get; set; }
+
+        /// <summary>
+        /// if is not null so the client use Pkce
+        /// </summary>
+        public string code_challenge { get; set; }
+
+        /// <summary>
+        /// Haser type for <see cref="code_challenge"/>
+        /// </summary>
+        public string code_challenege_method { get; set; }
     }
 }
