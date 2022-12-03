@@ -51,8 +51,7 @@ namespace OAuth20.Server.Services.CodeServce
         // Before updated the Concurrent Dictionary I have to Process User Sign In,
         // and check the user credienail first
         // But here I merge this process here inside update Concurrent Dictionary method
-        public AuthorizationCode UpdatedClientDataByCode(string key, IList<string> requestdScopes,
-            string userName, string password = null)
+        public AuthorizationCode UpdatedClientDataByCode(string key, IList<string> requestdScopes)
         {
             var oldValue = GetClientDataByCode(key);
 
@@ -79,26 +78,9 @@ namespace OAuth20.Server.Services.CodeServce
                         RequestedScopes = requestdScopes,
                         Nonce = oldValue.Nonce,
                         CodeChallenge = oldValue.CodeChallenge,
-                        CodeChallengeMethod = oldValue.CodeChallengeMethod
+                        CodeChallengeMethod = oldValue.CodeChallengeMethod,
+                        Subject = oldValue.Subject,
                     };
-
-
-                    // ------------------ I suppose the user name and password is correct  -----------------
-                    var claims = new List<Claim>();
-
-
-
-                    if (newValue.IsOpenId)
-                    {
-                        // TODO
-                        // Add more claims to the claims
-                    
-                    }
-
-                    var claimIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                    newValue.Subject = new ClaimsPrincipal(claimIdentity);
-                    // ------------------ -----------------------------------------------  -----------------
-
                     var result = _codeIssued.TryUpdate(key, newValue, oldValue);
 
                     if (result)
@@ -112,7 +94,9 @@ namespace OAuth20.Server.Services.CodeServce
         public AuthorizationCode RemoveClientDataByCode(string key)
         {
             AuthorizationCode authorizationCode;
-            _codeIssued.TryRemove(key, out authorizationCode);
+            var isRemoved = _codeIssued.TryRemove(key, out authorizationCode);
+            if (isRemoved)
+                return authorizationCode;
             return null;
         }
     }

@@ -92,7 +92,40 @@ namespace OAuth20.Server.Services.Users
         }
 
 
+        public async Task<OpenIdConnectLoginResponse> LoginUserByOpenIdAsync(OpenIdConnectLoginRequest request)
+        {
+            bool validationResult = validateOpenIdLoginRequest(request);
+            if (!validationResult)
+            {
+                _logger.LogInformation("login process is failed for request: {request}", request);
+                return new OpenIdConnectLoginResponse { Error = "The login process is failed" };
+            }
 
+            AppUser user = null;
+
+            user = await _userManager.FindByNameAsync(request.UserName);
+            if (user == null && request.UserName.Contains("@"))
+                user = await _userManager.FindByEmailAsync(request.UserName);
+
+            if (user == null)
+            {
+                _logger.LogInformation("creditioanl {userName}", request.UserName);
+                return new OpenIdConnectLoginResponse { Error = "No user has this creditioanl" };
+            }
+
+            await _signInManager.SignOutAsync();
+
+
+            Microsoft.AspNetCore.Identity.SignInResult loginResult = await _signInManager
+                .PasswordSignInAsync(user, request.Password, false, false);
+
+            if (loginResult.Succeeded)
+            {
+                return new OpenIdConnectLoginResponse { Succeeded = true };
+            }
+
+            return new OpenIdConnectLoginResponse { Succeeded = false, Error = "Login is not Succeeded" };
+        }
 
         #region Helper Functions
         private bool validateLoginRequest(LoginRequest request)
@@ -103,6 +136,13 @@ namespace OAuth20.Server.Services.Users
             if (request.Password.Length < 8)
                 return false;
 
+            return true;
+        }
+
+        private bool validateOpenIdLoginRequest(OpenIdConnectLoginRequest request)
+        {
+            if (request.Code == null || request.UserName == null || request.Password == null)
+                return false;
             return true;
         }
 

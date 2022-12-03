@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.Build.Framework;
+using System.Collections.Generic;
 
 namespace OAuth20.Server.OauthRequest
 {
@@ -9,5 +10,10 @@ namespace OAuth20.Server.OauthRequest
         public string RedirectUri { get; set; }
         public string Code { get; set; }
         public IList<string> RequestedScopes { get; set; }
+
+        public bool IsValid()
+        {
+            return (UserName != null && Password != null && Code != null  && RedirectUri != null);
+        }
     }
 }

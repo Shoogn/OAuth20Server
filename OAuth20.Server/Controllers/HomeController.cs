@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using NuGet.Protocol.Plugins;
 using OAuth20.Server.OauthRequest;
 using OAuth20.Server.Services;
 using OAuth20.Server.Services.CodeServce;
+using OAuth20.Server.Services.Users;
 using System.Threading.Tasks;
 
 namespace OAuth20.Server.Controllers
@@ -13,12 +15,14 @@ namespace OAuth20.Server.Controllers
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IAuthorizeResultService _authorizeResultService;
         private readonly ICodeStoreService _codeStoreService;
+        private readonly IUserManagerService _userManagerService;
         public HomeController(IHttpContextAccessor httpContextAccessor, IAuthorizeResultService authorizeResultService,
-            ICodeStoreService codeStoreService)
+            ICodeStoreService codeStoreService, IUserManagerService userManagerService)
         {
             _httpContextAccessor = httpContextAccessor;
             _authorizeResultService = authorizeResultService;
             _codeStoreService = codeStoreService;
+            _userManagerService = userManagerService;
         }
 
         public IActionResult Index()
@@ -32,6 +36,21 @@ namespace OAuth20.Server.Controllers
 
             if (result.HasError)
                 return RedirectToAction("Error", new { error = result.Error });
+
+            if (_httpContextAccessor.HttpContext.User.Identity.IsAuthenticated)
+            {
+                var updateCodeResult = _codeStoreService.UpdatedClientDataByCode(result.Code, result.RequestedScopes);
+                if (updateCodeResult != null)
+                {
+                    result.RedirectUri = result.RedirectUri + "&code=" + result.Code;
+                    return Redirect(result.RedirectUri);
+                }
+                else
+                {
+                    return RedirectToAction("Error", new { error = "invalid_request" });
+                }
+
+            }
 
             var loginModel = new OpenIdConnectLoginRequest
             {
@@ -55,13 +74,19 @@ namespace OAuth20.Server.Controllers
             // and I will show you how to integrate the ASP.NET Core Identity
             // With our framework
 
-            var result = _codeStoreService.UpdatedClientDataByCode(loginRequest.Code, loginRequest.RequestedScopes, loginRequest.UserName);
-            if (result != null)
-            {
-                loginRequest.RedirectUri = loginRequest.RedirectUri + "&code=" + loginRequest.Code;
-                return Redirect(loginRequest.RedirectUri);
-            }
+            if (!loginRequest.IsValid())
+                return RedirectToAction("Error", new { error = "invalid_request" });
+            var userLoginResult = await _userManagerService.LoginUserByOpenIdAsync(loginRequest);
 
+            if (userLoginResult.Succeeded)
+            {
+                var result = _codeStoreService.UpdatedClientDataByCode(loginRequest.Code, loginRequest.RequestedScopes);
+                if (result != null)
+                {
+                    loginRequest.RedirectUri = loginRequest.RedirectUri + "&code=" + loginRequest.Code;
+                    return Redirect(loginRequest.RedirectUri);
+                }
+            }
 
             return RedirectToAction("Error", new { error = "invalid_request" });
         }
@@ -71,7 +96,11 @@ namespace OAuth20.Server.Controllers
             var result = _authorizeResultService.GenerateToken(_httpContextAccessor);
 
             if (result.HasError)
-                return Json("0");
+                return Json(new
+                {
+                    error = result.Error,
+                    error_description = result.ErrorDescription
+                });
 
             return Json(result);
         }

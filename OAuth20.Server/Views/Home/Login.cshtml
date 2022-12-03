@@ -3,41 +3,49 @@
     ViewData["Title"] = "Login";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
+<div class="container" style="margin-top:30px;margin-bottom:130px">
+    <div class="row justify-content-md-center" style="margin-top:130px;">
+        <div class="col-md-5">
+            <div class="card">
+                <h5 class="card-header bg-dark text-white">Login</h5>
+                <div class="card-body">
 
-<h1>Login - Page</h1>
+                    <form class="px-4 py-3" asp-action="Login" asp-controller="Home" method="post">
 
-<div class="row">
-    @foreach (var i in Model.RequestedScopes)
-    {
-        <p>@i</p>
-    }
-
-
-    <div class="col-12">
-        <form asp-action="Login" asp-controller="Home" method="post">
-            <input type="hidden" asp-for="RedirectUri" />
-            <input type="hidden" asp-for="Code" />
-
-            @for (int i = 0; i < Model.RequestedScopes.Count; i++)
-            {
-                <input type="hidden" asp-for="RequestedScopes[i]" />
-            }
+                        <input type="hidden" asp-for="RedirectUri" />
+                        <input type="hidden" asp-for="Code" />
+                        @for (int i = 0; i < Model.RequestedScopes.Count; i++)
+                        {
+                            <input type="hidden" asp-for="RequestedScopes[i]" />
+                        }
 
 
-            <div class="col-md-6">
-                <label>User Name</label>
-                <input type="text" asp-for="UserName" class="form-control" />
+
+                        <div class="form-group">
+                            <label for="exampleDropdownFormEmail1">Email address</label>
+                            <input type="email" asp-for="UserName" class="form-control" id="exampleDropdownFormEmail1" placeholder="email@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="exampleDropdownFormPassword1">Password</label>
+                            <input type="password" asp-for="Password" class="form-control" id="exampleDropdownFormPassword1" placeholder="Password">
+                        </div>
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="dropdownCheck">
+                                <label class="form-check-label" for="dropdownCheck">
+                                    Remember me
+                                </label>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Sign in</button>
+                    </form>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" asp-action="Register" asp-controller="Accounts">New around here? Sign up</a>
+                    <a class="dropdown-item" href="#">Forgot password?</a>
+                </div>
             </div>
+        </div>
 
-            <div class="col-md-6">
-                <label>Password</label>
-                <input type="text" asp-for="Password" class="form-control" />
-            </div>
-
-
-            <div class="col-md-6">
-                <input type="submit" value="Login" class="btn btn-primary" />
-            </div>
-        </form>
     </div>
+
 </div>

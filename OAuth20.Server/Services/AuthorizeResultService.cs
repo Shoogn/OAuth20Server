@@ -18,6 +18,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace OAuth20.Server.Services
 {
@@ -98,7 +99,9 @@ namespace OAuth20.Server.Services
                 Nonce = nonce,
                 CodeChallenge = authorizationRequest.code_challenge,
                 CodeChallengeMethod = authorizationRequest.code_challenege_method,
-                CreationTime = DateTime.UtcNow
+                CreationTime = DateTime.UtcNow,
+                Subject = httpContextAccessor.HttpContext.User //as ClaimsPrincipal
+
             };
 
             string code = _codeStoreService.GenerateAuthorizationCode(authoCode);
@@ -159,6 +162,7 @@ namespace OAuth20.Server.Services
             return result;
         }
 
+
         public TokenResponse GenerateToken(IHttpContextAccessor httpContextAccessor)
         {
             TokenRequest request = new TokenRequest();
@@ -175,7 +179,7 @@ namespace OAuth20.Server.Services
             {
                 return new TokenResponse { Error = checkClientResult.Error, ErrorDescription = checkClientResult.ErrorDescription };
             }
-          
+
 
             // check code from the Concurrent Dictionary
             var clientCodeChecker = _codeStoreService.GetClientDataByCode(request.Code);
@@ -199,7 +203,7 @@ namespace OAuth20.Server.Services
                 var pkceResult = codeVerifierIsSendByTheClientThatReceivedTheCode(request.CodeVerifier,
                     clientCodeChecker.CodeChallenge, clientCodeChecker.CodeChallengeMethod);
 
-                if(!pkceResult)
+                if (!pkceResult)
                     return new TokenResponse { Error = ErrorTypeEnum.InvalidGrant.GetEnumDescription() };
             }
 
@@ -208,6 +212,16 @@ namespace OAuth20.Server.Services
             string id_token = string.Empty;
             if (clientCodeChecker.IsOpenId)
             {
+                if (!clientCodeChecker.Subject.Identity.IsAuthenticated)
+                    return new TokenResponse { Error = ErrorTypeEnum.InvalidGrant.GetEnumDescription() };
+
+                var currentUserName = clientCodeChecker.Subject.Identity.Name;
+
+                var userId = clientCodeChecker.Subject.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(currentUserName))
+                    return new TokenResponse { Error = ErrorTypeEnum.InvalidGrant.GetEnumDescription() };
+
                 // Generate Identity Token
                 int iat = (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
                 string[] amrs = new string[] { "pwd" };
@@ -221,8 +235,8 @@ namespace OAuth20.Server.Services
 
                 var claims = new List<Claim>()
                     {
-                        new Claim("sub", "856933325856"),
-                        new Claim("given_name", "Mohammed Ahmed Hussien"),
+                        new Claim("sub", userId),
+                        new Claim("given_name", currentUserName),
                         new Claim("iat", iat.ToString(), ClaimValueTypes.Integer), // time stamp
                         new Claim("nonce", clientCodeChecker.Nonce)
                     };
@@ -231,7 +245,7 @@ namespace OAuth20.Server.Services
 
                 JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
 
-                var token = new JwtSecurityToken("https://localhost:7275", checkClientResult.Client.ClientId, claims,
+                var token = new JwtSecurityToken(_options.IDPUri, checkClientResult.Client.ClientId, claims,
                     expires: DateTime.UtcNow.AddMinutes(int.Parse("5")), signingCredentials: new
                     SigningCredentials(rsaSecurityKey, SecurityAlgorithms.RsaSha256));
 
@@ -251,7 +265,7 @@ namespace OAuth20.Server.Services
             RsaSecurityKey rsaSecurityKey1 = new RsaSecurityKey(provider1);
             JwtSecurityTokenHandler handler1 = new JwtSecurityTokenHandler();
 
-            var token1 = new JwtSecurityToken("https://localhost:7275", checkClientResult.Client.ClientUri, claims_at,
+            var token1 = new JwtSecurityToken(_options.IDPUri, checkClientResult.Client.ClientUri, claims_at,
                 expires: DateTime.UtcNow.AddMinutes(int.Parse("5")), signingCredentials: new
                 SigningCredentials(rsaSecurityKey1, SecurityAlgorithms.RsaSha256));
 
@@ -268,8 +282,6 @@ namespace OAuth20.Server.Services
                 code = request.Code
             };
         }
-
-
 
         private bool codeVerifierIsSendByTheClientThatReceivedTheCode(string codeVerifier, string codeChallenge, string codeChallengeMethod)
         {

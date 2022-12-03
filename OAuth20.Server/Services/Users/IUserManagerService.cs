@@ -8,5 +8,6 @@ namespace OAuth20.Server.Services.Users
     {
         Task<LoginResponse> LoginUserAsync(LoginRequest request);
         Task<CreateUserResponse> CreateUserAsync(CreateUserRequest request);
+        Task<OpenIdConnectLoginResponse> LoginUserByOpenIdAsync(OpenIdConnectLoginRequest request);
     }
 }

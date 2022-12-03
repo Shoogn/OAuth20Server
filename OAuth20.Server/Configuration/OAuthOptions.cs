@@ -15,5 +15,10 @@
         /// </summary>
         public bool IsAvaliable { get; set; }
 
+        /// <summary>
+        /// This is the uri of the identity provider
+        /// </summary>
+        public string IDPUri { get; set; }
+
     }
 }
