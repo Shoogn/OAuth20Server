@@ -1,6 +1,13 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿/*
+                        GNU GENERAL PUBLIC LICENSE
+                          Version 3, 29 June 2007
+ Copyright (C) 2022 Mohammed Ahmed Hussien babiker Free Software Foundation, Inc. <https://fsf.org/>
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+ */
+
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using NuGet.Protocol.Plugins;
 using OAuth20.Server.OauthRequest;
 using OAuth20.Server.Services;
 using OAuth20.Server.Services.CodeServce;
