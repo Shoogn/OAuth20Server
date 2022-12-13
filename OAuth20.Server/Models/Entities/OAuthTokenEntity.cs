@@ -18,6 +18,7 @@ namespace OAuth20.Server.Models.Entities
         [Key]
         public long Id { get; set; }
         public string Token { get; set; }
+        public string ClientId { get; set; }
 
         /// <summary>
         /// This is a user Id
@@ -32,5 +33,8 @@ namespace OAuth20.Server.Models.Entities
         /// <see cref="https://github.com/Shoogn/SnowflakeId"/> for more details
         /// </summary>
         public string ReferenceId { get; set; }
+
+        public string TokenType { get; set; }
+        public string Status { get; set; }
     }
 }

@@ -6,19 +6,9 @@
  of this license document, but changing it is not allowed.
  */
 
-using System.ComponentModel;
-
-namespace OAuth20.Server.Models
+namespace OAuth20.Server.Validations
 {
-    internal enum AuthorizationGrantTypesEnum : byte
+    public class TokenRequestValidation
     {
-        [Description("code")]
-        Code,
-
-        [Description("clientcredentials")]
-        ClientCredentials,
-
-        [Description("refreshtoken")]
-        RefreshToken
     }
 }

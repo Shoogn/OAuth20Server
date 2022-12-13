@@ -23,6 +23,7 @@ namespace OAuth20.Server.Controllers
         private readonly IAuthorizeResultService _authorizeResultService;
         private readonly ICodeStoreService _codeStoreService;
         private readonly IUserManagerService _userManagerService;
+
         public HomeController(IHttpContextAccessor httpContextAccessor, IAuthorizeResultService authorizeResultService,
             ICodeStoreService codeStoreService, IUserManagerService userManagerService)
         {
@@ -98,9 +99,10 @@ namespace OAuth20.Server.Controllers
             return RedirectToAction("Error", new { error = "invalid_request" });
         }
 
-        public JsonResult Token()
+        [HttpPost]
+        public JsonResult Token(TokenRequest tokenRequest)
         {
-            var result = _authorizeResultService.GenerateToken(_httpContextAccessor);
+            var result = _authorizeResultService.GenerateToken(tokenRequest);
 
             if (result.HasError)
                 return Json(new
@@ -111,6 +113,7 @@ namespace OAuth20.Server.Controllers
 
             return Json(result);
         }
+
         public IActionResult Error(string error)
         {
             return View(error);

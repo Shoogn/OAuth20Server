@@ -11,7 +11,10 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OAuth20.Server.Common;
 using OAuth20.Server.Configuration;
+using OAuth20.Server.Helpers;
 using OAuth20.Server.Models;
+using OAuth20.Server.Models.Context;
+using OAuth20.Server.Models.Entities;
 using OAuth20.Server.OauthRequest;
 using OAuth20.Server.OauthResponse;
 using OAuth20.Server.Services.CodeServce;
@@ -32,11 +35,13 @@ namespace OAuth20.Server.Services
         private readonly ClientStore _clientStore = new ClientStore();
         private readonly ICodeStoreService _codeStoreService;
         private readonly OAuthOptions _options;
+        private readonly BaseDBContext _context;
 
-        public AuthorizeResultService(ICodeStoreService codeStoreService, IOptions<OAuthOptions> options)
+        public AuthorizeResultService(ICodeStoreService codeStoreService, IOptions<OAuthOptions> options, BaseDBContext context)
         {
             _codeStoreService = codeStoreService;
             _options = options.Value;
+            _context = context;
         }
         public AuthorizeResponse AuthorizeRequest(IHttpContextAccessor httpContextAccessor, AuthorizationRequest authorizationRequest)
         {
@@ -143,8 +148,6 @@ namespace OAuth20.Server.Services
                             return result;
                         }
                     }
-
-
                     // check if client is enabled or not
 
                     if (client.IsActive)
@@ -167,33 +170,34 @@ namespace OAuth20.Server.Services
         }
 
 
-        public TokenResponse GenerateToken(IHttpContextAccessor httpContextAccessor)
+        public TokenResponse GenerateToken(TokenRequest tokenRequest)
         {
-            TokenRequest request = new TokenRequest();
+            var serchBySecret = searchForClientBySecret(tokenRequest.grant_type);
 
-            request.CodeVerifier = httpContextAccessor.HttpContext.Request.Form["code_verifier"];
-            request.ClientId = httpContextAccessor.HttpContext.Request.Form["client_id"];
-            request.ClientSecret = httpContextAccessor.HttpContext.Request.Form["client_secret"];
-            request.Code = httpContextAccessor.HttpContext.Request.Form["code"];
-            request.GrantType = httpContextAccessor.HttpContext.Request.Form["grant_type"];
-            request.RedirectUri = httpContextAccessor.HttpContext.Request.Form["redirect_uri"];
-
-            var checkClientResult = this.VerifyClientById(request.ClientId, true, request.ClientSecret);
+            var checkClientResult = this.VerifyClientById(tokenRequest.client_id, serchBySecret, tokenRequest.client_secret);
             if (!checkClientResult.IsSuccess)
             {
                 return new TokenResponse { Error = checkClientResult.Error, ErrorDescription = checkClientResult.ErrorDescription };
             }
 
+            // Check first if the authorization_grant is client_credentials...
+            // then verify the client and issued an access_token
+
+            if (tokenRequest.grant_type == AuthorizationGrantTypesEnum.ClientCredentials.GetEnumDescription())
+            {
+                // so generate the jwt access token
+            }
+
 
             // check code from the Concurrent Dictionary
-            var clientCodeChecker = _codeStoreService.GetClientDataByCode(request.Code);
+            var clientCodeChecker = _codeStoreService.GetClientDataByCode(tokenRequest.code);
             if (clientCodeChecker == null)
                 return new TokenResponse { Error = ErrorTypeEnum.InvalidGrant.GetEnumDescription() };
 
 
             // check if the current client who is one made this authentication request
 
-            if (request.ClientId != clientCodeChecker.ClientId)
+            if (tokenRequest.client_id != clientCodeChecker.ClientId)
                 return new TokenResponse { Error = ErrorTypeEnum.InvalidGrant.GetEnumDescription() };
 
             // TODO: 
@@ -204,7 +208,7 @@ namespace OAuth20.Server.Services
 
             if (checkClientResult.Client.UsePkce)
             {
-                var pkceResult = codeVerifierIsSendByTheClientThatReceivedTheCode(request.CodeVerifier,
+                var pkceResult = codeVerifierIsSendByTheClientThatReceivedTheCode(tokenRequest.code_verifier,
                     clientCodeChecker.CodeChallenge, clientCodeChecker.CodeChallengeMethod);
 
                 if (!pkceResult)
@@ -217,6 +221,7 @@ namespace OAuth20.Server.Services
             if (clientCodeChecker.IsOpenId)
             {
                 if (!clientCodeChecker.Subject.Identity.IsAuthenticated)
+                    // I have to inform the caller to redirect the user to the login page
                     return new TokenResponse { Error = ErrorTypeEnum.InvalidGrant.GetEnumDescription() };
 
                 var currentUserName = clientCodeChecker.Subject.Identity.Name;
@@ -255,10 +260,31 @@ namespace OAuth20.Server.Services
 
                 id_token = handler.WriteToken(token);
 
+                var idptoken = new OAuthTokenEntity
+                {
+                    ClientId = checkClientResult.Client.ClientId,
+                    CreationDate = DateTime.Now,
+                    ReferenceId = Guid.NewGuid().ToString(),
+                    Status = Constants.Statuses.Valid,
+                    Token = id_token,
+                    TokenType = Constants.TokenTypes.JWTIdentityToken,
+                    ExpirationDate = token.ValidTo, 
+                    SubjectId = userId
+                };
+                _context.OAuthTokens.Add(idptoken);
+                _context.SaveChanges();
+
             }
 
             // Here I have to generate access token 
             var claims_at = new List<Claim>();
+
+            var scopesinJWtAccessToken = from m in clientCodeChecker.RequestedScopes.ToList()
+                                         where !OAuth2ServerHelpers.OpenIdConnectScopes.Contains(m)
+                                         select m;
+
+            foreach (var item in scopesinJWtAccessToken)
+                claims_at.Add(new Claim("scope", item));
 
             string access_token = string.Empty;
             RSACryptoServiceProvider provider1 = new RSACryptoServiceProvider();
@@ -276,14 +302,28 @@ namespace OAuth20.Server.Services
             access_token = handler1.WriteToken(token1);
 
 
+            var atoken = new OAuthTokenEntity
+            {
+                ClientId = checkClientResult.Client.ClientId,
+                CreationDate = DateTime.Now,
+                ReferenceId = Guid.NewGuid().ToString(),
+                Status = Constants.Statuses.Valid,
+                Token = access_token,
+                TokenType = Constants.TokenTypes.JWTAcceseccToken,
+                ExpirationDate = token1.ValidTo
+            };
+
+            _context.OAuthTokens.Add(atoken);
+            _context.SaveChanges();
+
             // here remove the code from the Concurrent Dictionary
-            _codeStoreService.RemoveClientDataByCode(request.Code);
+            _codeStoreService.RemoveClientDataByCode(tokenRequest.code);
 
             return new TokenResponse
             {
                 access_token = access_token,
                 id_token = id_token,
-                code = request.Code
+                code = tokenRequest.code
             };
         }
 
@@ -304,6 +344,16 @@ namespace OAuth20.Server.Services
             var tranformedResultS256 = Base64UrlEncoder.Encode(computedHashS256);
 
             return tranformedResultS256.Equals(codeChallenge);
+        }
+
+
+        private bool searchForClientBySecret(string grantType)
+        {
+            if (grantType == AuthorizationGrantTypesEnum.ClientCredentials.GetEnumDescription() ||
+                grantType == AuthorizationGrantTypesEnum.RefreshToken.GetEnumDescription())
+                return false;
+
+            return true;
         }
     }
 }

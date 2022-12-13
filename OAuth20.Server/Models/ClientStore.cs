@@ -19,7 +19,7 @@ namespace OAuth20.Server.Models
                 ClientName = "blazorWasm",
                 ClientId = "1",
                 ClientSecret = "123456789",
-                AllowedScopes = new[]{ "openid", "profile"},
+                AllowedScopes = new[]{ "openid", "profile", "blazorWasmapi.readandwrite" },
                 GrantType = GrantTypes.Code,
                 IsActive = true,
                 ClientUri = "https://localhost:7026",

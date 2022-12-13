@@ -15,6 +15,6 @@ namespace OAuth20.Server.Services
     public interface IAuthorizeResultService
     {
         AuthorizeResponse AuthorizeRequest(IHttpContextAccessor httpContextAccessor, AuthorizationRequest authorizationRequest);
-        TokenResponse GenerateToken(IHttpContextAccessor httpContextAccessor);
+        TokenResponse GenerateToken(TokenRequest tokenRequest);
     }
 }

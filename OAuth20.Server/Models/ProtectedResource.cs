@@ -6,19 +6,17 @@
  of this license document, but changing it is not allowed.
  */
 
-using System.ComponentModel;
+using System.Collections.Generic;
 
 namespace OAuth20.Server.Models
 {
-    internal enum AuthorizationGrantTypesEnum : byte
+    /// <summary>
+    /// This is an APIs applications
+    /// </summary>
+    public class ProtectedResource
     {
-        [Description("code")]
-        Code,
-
-        [Description("clientcredentials")]
-        ClientCredentials,
-
-        [Description("refreshtoken")]
-        RefreshToken
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public IList<string> AllowScopes { get; set; }
     }
 }

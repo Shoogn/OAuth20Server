@@ -6,19 +6,13 @@
  of this license document, but changing it is not allowed.
  */
 
-using System.ComponentModel;
-
-namespace OAuth20.Server.Models
+namespace OAuth20.Server.Validations
 {
-    internal enum AuthorizationGrantTypesEnum : byte
+    public class BaseValidationResponse
     {
-        [Description("code")]
-        Code,
-
-        [Description("clientcredentials")]
-        ClientCredentials,
-
-        [Description("refreshtoken")]
-        RefreshToken
+        public bool Succeeded { get; set; }
+        public string Error { get; set; } = string.Empty;
+        public string ErrorDescription { get; set; }
+        public bool HasError => !string.IsNullOrEmpty(Error);
     }
 }
