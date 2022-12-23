@@ -6,6 +6,8 @@
  of this license document, but changing it is not allowed.
  */
 
+using System.Collections.Generic;
+
 namespace OAuth20.Server.OauthRequest
 {
     public class TokenRequest
@@ -16,5 +18,6 @@ namespace OAuth20.Server.OauthRequest
         public string grant_type { get; set; }
         public string redirect_uri { get; set; }
         public string code_verifier { get; set; }
+        public IList<string> scopes { get; set; }
     }
 }

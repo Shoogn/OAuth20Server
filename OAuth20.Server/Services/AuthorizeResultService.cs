@@ -7,6 +7,7 @@
  */
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OAuth20.Server.Common;
@@ -172,6 +173,8 @@ namespace OAuth20.Server.Services
 
         public TokenResponse GenerateToken(TokenRequest tokenRequest)
         {
+
+            var result = new TokenResponse();
             var serchBySecret = searchForClientBySecret(tokenRequest.grant_type);
 
             var checkClientResult = this.VerifyClientById(tokenRequest.client_id, serchBySecret, tokenRequest.client_secret);
@@ -181,11 +184,11 @@ namespace OAuth20.Server.Services
             }
 
             // Check first if the authorization_grant is client_credentials...
-            // then verify the client and issued an access_token
+            // then generate the jwt access token and store it to back store
 
             if (tokenRequest.grant_type == AuthorizationGrantTypesEnum.ClientCredentials.GetEnumDescription())
             {
-                // so generate the jwt access token
+               
             }
 
 
@@ -276,30 +279,11 @@ namespace OAuth20.Server.Services
 
             }
 
-            // Here I have to generate access token 
-            var claims_at = new List<Claim>();
-
             var scopesinJWtAccessToken = from m in clientCodeChecker.RequestedScopes.ToList()
                                          where !OAuth2ServerHelpers.OpenIdConnectScopes.Contains(m)
                                          select m;
 
-            foreach (var item in scopesinJWtAccessToken)
-                claims_at.Add(new Claim("scope", item));
-
-            string access_token = string.Empty;
-            RSACryptoServiceProvider provider1 = new RSACryptoServiceProvider();
-
-            string publicPrivateKey1 = File.ReadAllText("PublicPrivateKey.xml");
-            provider1.FromXmlString(publicPrivateKey1);
-
-            RsaSecurityKey rsaSecurityKey1 = new RsaSecurityKey(provider1);
-            JwtSecurityTokenHandler handler1 = new JwtSecurityTokenHandler();
-
-            var token1 = new JwtSecurityToken(_options.IDPUri, checkClientResult.Client.ClientUri, claims_at,
-                expires: DateTime.UtcNow.AddMinutes(int.Parse("5")), signingCredentials: new
-                SigningCredentials(rsaSecurityKey1, SecurityAlgorithms.RsaSha256));
-
-            access_token = handler1.WriteToken(token1);
+            var accessTokenResult = generateJWTTokne(scopesinJWtAccessToken, Constants.TokenTypes.JWTAcceseccToken, checkClientResult.Client);
 
 
             var atoken = new OAuthTokenEntity
@@ -308,9 +292,9 @@ namespace OAuth20.Server.Services
                 CreationDate = DateTime.Now,
                 ReferenceId = Guid.NewGuid().ToString(),
                 Status = Constants.Statuses.Valid,
-                Token = access_token,
+                Token = accessTokenResult.AccessToken,
                 TokenType = Constants.TokenTypes.JWTAcceseccToken,
-                ExpirationDate = token1.ValidTo
+                ExpirationDate = accessTokenResult.ExpirationDate
             };
 
             _context.OAuthTokens.Add(atoken);
@@ -319,12 +303,10 @@ namespace OAuth20.Server.Services
             // here remove the code from the Concurrent Dictionary
             _codeStoreService.RemoveClientDataByCode(tokenRequest.code);
 
-            return new TokenResponse
-            {
-                access_token = access_token,
-                id_token = id_token,
-                code = tokenRequest.code
-            };
+            result.access_token = accessTokenResult.AccessToken;
+            result.id_token = id_token;
+            result.code = tokenRequest.code;
+            return result;
         }
 
         private bool codeVerifierIsSendByTheClientThatReceivedTheCode(string codeVerifier, string codeChallenge, string codeChallengeMethod)
@@ -351,9 +333,46 @@ namespace OAuth20.Server.Services
         {
             if (grantType == AuthorizationGrantTypesEnum.ClientCredentials.GetEnumDescription() ||
                 grantType == AuthorizationGrantTypesEnum.RefreshToken.GetEnumDescription())
-                return false;
+                return true;
 
             return true;
+        }
+
+
+        public TokenResult generateJWTTokne(IEnumerable<string> scopes, string tokenType, Client client)
+        {
+            var result = new TokenResult();
+
+            if (tokenType == Constants.TokenTypes.JWTAcceseccToken)
+            {
+                var claims_at = new List<Claim>();
+                foreach (var item in scopes)
+                    claims_at.Add(new Claim("scope", item));
+
+                RSACryptoServiceProvider provider1 = new RSACryptoServiceProvider();
+
+                string publicPrivateKey1 = File.ReadAllText("PublicPrivateKey.xml");
+                provider1.FromXmlString(publicPrivateKey1);
+
+                RsaSecurityKey rsaSecurityKey1 = new RsaSecurityKey(provider1);
+                JwtSecurityTokenHandler handler1 = new JwtSecurityTokenHandler();
+
+                var token1 = new JwtSecurityToken(_options.IDPUri, client.ClientUri, claims_at,
+                    expires: DateTime.UtcNow.AddMinutes(int.Parse("5")), signingCredentials: new
+                    SigningCredentials(rsaSecurityKey1, SecurityAlgorithms.RsaSha256));
+
+                string access_token = handler1.WriteToken(token1);
+
+                result.AccessToken = access_token;
+                result.TokenType = tokenType;
+                result.ExpirationDate = token1.ValidTo;
+            }
+            else
+            {
+
+            }
+
+            return result;
         }
     }
 }
