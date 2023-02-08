@@ -128,7 +128,7 @@ namespace OAuth20.Server.Services.Users
 
             if (loginResult.Succeeded)
             {
-                return new OpenIdConnectLoginResponse { Succeeded = true };
+                return new OpenIdConnectLoginResponse { Succeeded = true, AppUser = user };
             }
 
             return new OpenIdConnectLoginResponse { Succeeded = false, Error = "Login is not Succeeded" };

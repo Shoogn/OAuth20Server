@@ -8,6 +8,7 @@
 
 using OAuth20.Server.Models;
 using System.Collections.Generic;
+using System.Security.Claims;
 
 namespace OAuth20.Server.Services.CodeServce
 {
@@ -15,7 +16,7 @@ namespace OAuth20.Server.Services.CodeServce
     {
         string GenerateAuthorizationCode(AuthorizationCode authorizationCode);
         AuthorizationCode GetClientDataByCode(string key);
-        AuthorizationCode UpdatedClientDataByCode(string key, IList<string> requestdScopes);
+        AuthorizationCode UpdatedClientDataByCode(string key, ClaimsPrincipal claimsPrincipal, IList<string> requestdScopes);
         AuthorizationCode RemoveClientDataByCode(string key);
     }
 }

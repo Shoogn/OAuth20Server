@@ -6,6 +6,7 @@
  of this license document, but changing it is not allowed.
  */
 
+using OAuth20.Server.Models.Entities;
 using System.Collections.Generic;
 
 namespace OAuth20.Server.OauthResponse
@@ -18,6 +19,8 @@ namespace OAuth20.Server.OauthResponse
         public string RedirectUri { get; set; }
         public string Code { get; set; }
         public IList<string> RequestedScopes { get; set; }
+
+        public AppUser AppUser { get; set; }
         public bool Succeeded { get; set; }
         public string Error { get; set; } = string.Empty;
 

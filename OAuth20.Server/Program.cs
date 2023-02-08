@@ -39,9 +39,9 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
     options.Password.RequireNonAlphanumeric = false;
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.User.RequireUniqueEmail = true;
-}).AddRoles<IdentityRole>().AddEntityFrameworkStores<BaseDBContext>();
+}).AddRoles<IdentityRole>().AddEntityFrameworkStores<BaseDBContext>().AddDefaultTokenProviders();
 
-builder.Services.AddAuthentication().AddCookie();
+builder.Services.AddAuthentication();
 
 builder.Services.ConfigureApplicationCookie(options =>
 {

@@ -11,6 +11,7 @@ using OAuth20.Server.Models;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Security.Cryptography;
 
 namespace OAuth20.Server.Services.CodeServce
@@ -55,7 +56,7 @@ namespace OAuth20.Server.Services.CodeServce
         // Before updated the Concurrent Dictionary I have to Process User Sign In,
         // and check the user credienail first
         // But here I merge this process here inside update Concurrent Dictionary method
-        public AuthorizationCode UpdatedClientDataByCode(string key, IList<string> requestdScopes)
+        public AuthorizationCode UpdatedClientDataByCode(string key, ClaimsPrincipal claimsPrincipal, IList<string> requestdScopes)
         {
             var oldValue = GetClientDataByCode(key);
 
@@ -83,7 +84,7 @@ namespace OAuth20.Server.Services.CodeServce
                         Nonce = oldValue.Nonce,
                         CodeChallenge = oldValue.CodeChallenge,
                         CodeChallengeMethod = oldValue.CodeChallengeMethod,
-                        Subject = oldValue.Subject,
+                        Subject = claimsPrincipal,
                     };
                     var result = _codeIssued.TryUpdate(key, newValue, oldValue);
 

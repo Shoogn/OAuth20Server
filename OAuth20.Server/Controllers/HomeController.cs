@@ -7,7 +7,9 @@
  */
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using OAuth20.Server.Models.Entities;
 using OAuth20.Server.OauthRequest;
 using OAuth20.Server.Services;
 using OAuth20.Server.Services.CodeServce;
@@ -23,14 +25,17 @@ namespace OAuth20.Server.Controllers
         private readonly IAuthorizeResultService _authorizeResultService;
         private readonly ICodeStoreService _codeStoreService;
         private readonly IUserManagerService _userManagerService;
+        private readonly IUserClaimsPrincipalFactory<AppUser> _userClaimsPrincipalFactory;
 
         public HomeController(IHttpContextAccessor httpContextAccessor, IAuthorizeResultService authorizeResultService,
-            ICodeStoreService codeStoreService, IUserManagerService userManagerService)
+            ICodeStoreService codeStoreService, IUserManagerService userManagerService,
+            IUserClaimsPrincipalFactory<AppUser> userClaimsPrincipalFactory)
         {
             _httpContextAccessor = httpContextAccessor;
             _authorizeResultService = authorizeResultService;
             _codeStoreService = codeStoreService;
             _userManagerService = userManagerService;
+            _userClaimsPrincipalFactory= userClaimsPrincipalFactory;
         }
 
         public IActionResult Index()
@@ -47,7 +52,8 @@ namespace OAuth20.Server.Controllers
 
             if (_httpContextAccessor.HttpContext.User.Identity.IsAuthenticated)
             {
-                var updateCodeResult = _codeStoreService.UpdatedClientDataByCode(result.Code, result.RequestedScopes);
+                var updateCodeResult = _codeStoreService.UpdatedClientDataByCode(result.Code, 
+                    _httpContextAccessor.HttpContext.User, result.RequestedScopes);
                 if (updateCodeResult != null)
                 {
                     result.RedirectUri = result.RedirectUri + "&code=" + result.Code;
@@ -88,7 +94,9 @@ namespace OAuth20.Server.Controllers
 
             if (userLoginResult.Succeeded)
             {
-                var result = _codeStoreService.UpdatedClientDataByCode(loginRequest.Code, loginRequest.RequestedScopes);
+                var claimsPrincipals = await _userClaimsPrincipalFactory.CreateAsync(userLoginResult.AppUser);
+                var result = _codeStoreService.UpdatedClientDataByCode(loginRequest.Code,
+                    claimsPrincipals, loginRequest.RequestedScopes);
                 if (result != null)
                 {
                     loginRequest.RedirectUri = loginRequest.RedirectUri + "&code=" + loginRequest.Code;
