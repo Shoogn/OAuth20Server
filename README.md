@@ -39,7 +39,7 @@ Here is the signature of the Client object ( you can find it in the Models folde
         public bool UsePkce { get; set; }
     }
  ```
- ### How to register your Applications
+ ### How to register your Applications?
  As I said in the prevoius step, there is a class named ClientStore and this object has an property named Clients with IEnumerable of Client  return type
  For example, to register one client you should do so:
  ```C#
@@ -62,3 +62,4 @@ Here is the signature of the Client object ( you can find it in the Models folde
         };
     }
  ```
+ You can add more clients as you need, the one that show here is a front-end client and that is very clear from the AllowedScopes property by allowing openid which indicate that the OAuth20Server will return Idp token to the registerd application.
