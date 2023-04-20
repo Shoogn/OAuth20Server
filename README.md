@@ -1,6 +1,6 @@
 ### OAuth20Server
 This is OAtuh 2.0 Server and OpenId Connect Provider, this OAuth server is not a complete one,
-but by using it your users can login and register, also they can obtain access token and Idp token also.
+but by using it your users can login and register, also they can obtain access token and Idp token too.
 If you want to create this project from scratch please read my step by step explained article from [here](https://dev.to/mohammedahmed/build-your-own-oauth-20-server-and-openid-connect-provider-in-aspnet-core-60-1g1m) 
 
 ---
