@@ -6,10 +6,10 @@ If you want to create this project from scratch please read my step by step expl
 ---
 ### Get Started
 This OAuth server target .NET 6, so clone the project or download it. After that open the downloaded project with your prefere IDE (ex: Visual Studio).
-In the solution there a folder named Models, inside this folder there is a class named ClientStore.cs this class accept a list of Clients and Clients here
-means your applications, or the applications that you would like to behave with  OAuth2 and OpenId Connect protocols.
+In the solution there is a folder named **Models**, inside this folder there is a class named **ClientStore.cs** this class accept a list of Clients and Clients here
+means your applications, or the applications that you would like to intracted with OAuth2 and OpenId Connect protocols.
 
-Here is the signature of the Client object ( you can find it in the Models folder)
+Here is the signature of the **Client** object ( you can find it in the Models folder )
 ```C#
     public class Client
     {
@@ -41,8 +41,8 @@ Here is the signature of the Client object ( you can find it in the Models folde
     }
  ```
  ### How to register your Applications?
- As I said in the prevoius step, there is a class named ClientStore and this object has an property named Clients with IEnumerable of Client  return type
- For example, to register one client you should do so:
+ As I said in the prevoius step, there is a class named **ClientStore** and this object has an property named **Clients** with IEnumerable of Client return type
+ For example, to register one client you should do like so:
  ```C#
   public class ClientStore
     {
@@ -63,4 +63,4 @@ Here is the signature of the Client object ( you can find it in the Models folde
         };
     }
  ```
- You can add more clients as you need, the one that show here is a front-end client and that is very clear from the AllowedScopes property by allowing openid which indicate that the OAuth20Server will return Idp token to the registerd application.
+ You can add more clients as you need, the one that shown here, is a front-end (ASP.NET Core Application) client and that is very clear from the **AllowedScopes** property by allowing openid scope which indicate that the **OAuth20Server** will return **Idp token** to the registerd application alond side **access token**.
