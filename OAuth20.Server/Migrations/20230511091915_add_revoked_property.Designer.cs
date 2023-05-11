@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OAuth20.Server.Models.Context;
 
@@ -11,9 +12,10 @@ using OAuth20.Server.Models.Context;
 namespace OAuth20.Server.Migrations
 {
     [DbContext(typeof(BaseDBContext))]
-    partial class BaseDBContextModelSnapshot : ModelSnapshot
+    [Migration("20230511091915_add_revoked_property")]
+    partial class add_revoked_property
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -284,9 +286,6 @@ namespace OAuth20.Server.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("TokenType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TokenTypeHint")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");

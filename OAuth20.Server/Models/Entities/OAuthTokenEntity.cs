@@ -6,6 +6,7 @@
  of this license document, but changing it is not allowed.
  */
 
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -35,6 +36,12 @@ namespace OAuth20.Server.Models.Entities
         public string ReferenceId { get; set; }
 
         public string TokenType { get; set; }
+        public string TokenTypeHint { get; set; }
         public string Status { get; set; }
+
+        /// <summary>
+        /// A flag to indicate if the token is revoked
+        /// </summary>
+        public bool Revoked { get; set; }
     }
 }

@@ -12,12 +12,14 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using OAuth20.Server.Configuration;
 using OAuth20.Server.Models.Context;
 using OAuth20.Server.Models.Entities;
 using OAuth20.Server.Services;
 using OAuth20.Server.Services.CodeServce;
 using OAuth20.Server.Services.Users;
+using OAuth20.Server.Validations;
 using System;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,6 +57,9 @@ builder.Services.Configure<OAuthOptions>(configServices.GetSection("OAuthOptions
 builder.Services.AddScoped<IAuthorizeResultService, AuthorizeResultService>();
 builder.Services.AddSingleton<ICodeStoreService, CodeStoreService>();
 builder.Services.AddScoped<IUserManagerService, UserManagerService>();
+builder.Services.AddScoped<ITokenRevocationService, TokenRevocationService>();
+builder.Services.TryAddScoped<ITokenRevocationValidation, TokenRevocationValidation>();
+
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.Configure<RouteOptions>(options =>

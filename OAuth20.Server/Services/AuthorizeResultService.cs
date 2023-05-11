@@ -272,7 +272,8 @@ namespace OAuth20.Server.Services
                     Token = id_token,
                     TokenType = Constants.TokenTypes.JWTIdentityToken,
                     ExpirationDate = token.ValidTo, 
-                    SubjectId = userId
+                    SubjectId = userId,
+                    Revoked = false
                 };
                 _context.OAuthTokens.Add(idptoken);
                 _context.SaveChanges();
@@ -294,7 +295,9 @@ namespace OAuth20.Server.Services
                 Status = Constants.Statuses.Valid,
                 Token = accessTokenResult.AccessToken,
                 TokenType = Constants.TokenTypes.JWTAcceseccToken,
-                ExpirationDate = accessTokenResult.ExpirationDate
+                TokenTypeHint = Constants.TokenTypeHints.AccessToken,
+                ExpirationDate = accessTokenResult.ExpirationDate,
+                Revoked = false
             };
 
             _context.OAuthTokens.Add(atoken);

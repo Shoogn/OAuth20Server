@@ -6,6 +6,8 @@
  of this license document, but changing it is not allowed.
  */
 
+using NuGet.Protocol.Plugins;
+
 namespace OAuth20.Server.Common
 {
     public static class Constants
@@ -29,13 +31,22 @@ namespace OAuth20.Server.Common
         }
 
 
-
+        public static class TokenTypeHints
+        {
+            public const string AccessToken = "access_token";
+            public const string RefreshToken = "refresh_token";
+        }
 
         public static class Statuses
         {
             public const string InActive = "inactive";
             public const string Revoked = "revoked";
             public const string Valid = "valid";
+        }
+
+        public static class ContentTypeSupported
+        {
+            public const string XwwwFormUrlEncoded = "application/x-www-form-urlencoded";
         }
     }
 }
