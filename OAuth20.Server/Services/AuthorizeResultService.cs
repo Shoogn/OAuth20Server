@@ -37,12 +37,17 @@ namespace OAuth20.Server.Services
         private readonly ICodeStoreService _codeStoreService;
         private readonly OAuthOptions _options;
         private readonly BaseDBContext _context;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public AuthorizeResultService(ICodeStoreService codeStoreService, IOptions<OAuthOptions> options, BaseDBContext context)
+        public AuthorizeResultService(ICodeStoreService codeStoreService,
+            IOptions<OAuthOptions> options,
+            BaseDBContext context,
+            IHttpContextAccessor httpContextAccessor)
         {
             _codeStoreService = codeStoreService;
             _options = options.Value;
             _context = context;
+            _httpContextAccessor = httpContextAccessor;
         }
         public AuthorizeResponse AuthorizeRequest(IHttpContextAccessor httpContextAccessor, AuthorizationRequest authorizationRequest)
         {
@@ -129,10 +134,31 @@ namespace OAuth20.Server.Services
             return response;
         }
 
-
-        private CheckClientResult VerifyClientById(string clientId, bool checkWithSecret = false, string clientSecret = null)
+        private CheckClientResult VerifyClientById(string clientId, bool checkWithSecret = false, string clientSecret = null, string grantType = null)
         {
             CheckClientResult result = new CheckClientResult() { IsSuccess = false };
+
+            if (!string.IsNullOrWhiteSpace(grantType) && grantType == AuthorizationGrantTypesEnum.ClientCredentials.GetEnumDescription())
+            {
+                var data = _httpContextAccessor.HttpContext;
+                var authHeader = data.Request.Headers["Authorization"].ToString();
+                if (authHeader == null)
+                    return result;
+                if (!authHeader.StartsWith("Basic", StringComparison.OrdinalIgnoreCase))
+                    return result;
+
+                var parameters = authHeader.Substring("Basic ".Length);
+                var authorizationKeys = Encoding.UTF8.GetString(Convert.FromBase64String(parameters));
+
+                var authorizationResult = authorizationKeys.IndexOf(':');
+                if (authorizationResult == -1)
+                    return result;
+                clientId = authorizationKeys.Substring(0, authorizationResult);
+                clientSecret = authorizationKeys.Substring(authorizationResult + 1);
+
+            }
+
+
 
             if (!string.IsNullOrWhiteSpace(clientId))
             {
@@ -177,7 +203,7 @@ namespace OAuth20.Server.Services
             var result = new TokenResponse();
             var serchBySecret = searchForClientBySecret(tokenRequest.grant_type);
 
-            var checkClientResult = this.VerifyClientById(tokenRequest.client_id, serchBySecret, tokenRequest.client_secret);
+            var checkClientResult = this.VerifyClientById(tokenRequest.client_id, serchBySecret, tokenRequest.client_secret, tokenRequest.grant_type);
             if (!checkClientResult.IsSuccess)
             {
                 return new TokenResponse { Error = checkClientResult.Error, ErrorDescription = checkClientResult.ErrorDescription };
@@ -188,7 +214,21 @@ namespace OAuth20.Server.Services
 
             if (tokenRequest.grant_type == AuthorizationGrantTypesEnum.ClientCredentials.GetEnumDescription())
             {
-               
+                var clientHasClientCredentialsGrant = checkClientResult.Client.GrantTypes.Contains(tokenRequest.grant_type);
+                if (!clientHasClientCredentialsGrant)
+                {
+                    result.Error = ErrorTypeEnum.InvalidGrant.GetEnumDescription();
+                    return result;
+                }
+                IEnumerable<string> scopes = checkClientResult.Client.AllowedScopes.Intersect(tokenRequest.scopes);
+
+                var clientCredentialAccessTokenResult = generateJWTTokne(scopes, Constants.TokenTypes.JWTAcceseccToken, checkClientResult.Client);
+                SaveJWTTokenInBackStore(checkClientResult.Client.ClientId, clientCredentialAccessTokenResult.AccessToken, clientCredentialAccessTokenResult.ExpirationDate);
+
+                result.access_token = clientCredentialAccessTokenResult.AccessToken;
+                result.id_token = null; // I have to use data shaping here to remove this property or I can customize the return data in the json result, but for now null is ok.
+                result.code = tokenRequest.code;
+                return result;
             }
 
 
@@ -207,8 +247,6 @@ namespace OAuth20.Server.Services
             // also I have to check the rediret uri 
 
 
-            // Check Pkce
-
             if (checkClientResult.Client.UsePkce)
             {
                 var pkceResult = codeVerifierIsSendByTheClientThatReceivedTheCode(tokenRequest.code_verifier,
@@ -218,7 +256,6 @@ namespace OAuth20.Server.Services
                     return new TokenResponse { Error = ErrorTypeEnum.InvalidGrant.GetEnumDescription() };
             }
 
-            // Now here I will Issue the Id_token
 
             string id_token = string.Empty;
             if (clientCodeChecker.IsOpenId)
@@ -271,7 +308,7 @@ namespace OAuth20.Server.Services
                     Status = Constants.Statuses.Valid,
                     Token = id_token,
                     TokenType = Constants.TokenTypes.JWTIdentityToken,
-                    ExpirationDate = token.ValidTo, 
+                    ExpirationDate = token.ValidTo,
                     SubjectId = userId,
                     Revoked = false
                 };
@@ -285,23 +322,7 @@ namespace OAuth20.Server.Services
                                          select m;
 
             var accessTokenResult = generateJWTTokne(scopesinJWtAccessToken, Constants.TokenTypes.JWTAcceseccToken, checkClientResult.Client);
-
-
-            var atoken = new OAuthTokenEntity
-            {
-                ClientId = checkClientResult.Client.ClientId,
-                CreationDate = DateTime.Now,
-                ReferenceId = Guid.NewGuid().ToString(),
-                Status = Constants.Statuses.Valid,
-                Token = accessTokenResult.AccessToken,
-                TokenType = Constants.TokenTypes.JWTAcceseccToken,
-                TokenTypeHint = Constants.TokenTypeHints.AccessToken,
-                ExpirationDate = accessTokenResult.ExpirationDate,
-                Revoked = false
-            };
-
-            _context.OAuthTokens.Add(atoken);
-            _context.SaveChanges();
+            SaveJWTTokenInBackStore(checkClientResult.Client.ClientId, accessTokenResult.AccessToken, accessTokenResult.ExpirationDate);
 
             // here remove the code from the Concurrent Dictionary
             _codeStoreService.RemoveClientDataByCode(tokenRequest.code);
@@ -310,6 +331,25 @@ namespace OAuth20.Server.Services
             result.id_token = id_token;
             result.code = tokenRequest.code;
             return result;
+        }
+
+
+        private int SaveJWTTokenInBackStore(string clientId, string accessToken, DateTime expireIn)
+        {
+            var atoken = new OAuthTokenEntity
+            {
+                ClientId = clientId,
+                CreationDate = DateTime.Now,
+                ReferenceId = Guid.NewGuid().ToString(),
+                Status = Constants.Statuses.Valid,
+                Token = accessToken,
+                TokenType = Constants.TokenTypes.JWTAcceseccToken,
+                TokenTypeHint = Constants.TokenTypeHints.AccessToken,
+                ExpirationDate = expireIn,
+                Revoked = false
+            };
+            _context.OAuthTokens.Add(atoken);
+            return _context.SaveChanges();
         }
 
         private bool codeVerifierIsSendByTheClientThatReceivedTheCode(string codeVerifier, string codeChallenge, string codeChallengeMethod)
@@ -335,10 +375,11 @@ namespace OAuth20.Server.Services
         private bool searchForClientBySecret(string grantType)
         {
             if (grantType == AuthorizationGrantTypesEnum.ClientCredentials.GetEnumDescription() ||
-                grantType == AuthorizationGrantTypesEnum.RefreshToken.GetEnumDescription())
+                grantType == AuthorizationGrantTypesEnum.RefreshToken.GetEnumDescription() ||
+                grantType == AuthorizationGrantTypesEnum.ClientCredentials.GetEnumDescription())
                 return true;
 
-            return true;
+            return false;
         }
 
 
@@ -350,7 +391,7 @@ namespace OAuth20.Server.Services
             {
                 var claims_at = new List<Claim>();
                 foreach (var item in scopes)
-                    claims_at.Add(new Claim("scope", item));
+                    claims_at.Add(new Claim("scopes", item));
 
                 RSACryptoServiceProvider provider1 = new RSACryptoServiceProvider();
 

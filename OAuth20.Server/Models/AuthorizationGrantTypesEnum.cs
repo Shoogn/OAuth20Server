@@ -12,13 +12,12 @@ namespace OAuth20.Server.Models
 {
     internal enum AuthorizationGrantTypesEnum : byte
     {
-        [Description("code")]
-        Code,
+        [Description("code")] Code,
 
-        [Description("clientcredentials")]
-        ClientCredentials,
+        [Description("client_credentials")] ClientCredentials,
 
-        [Description("refreshtoken")]
-        RefreshToken
+        [Description("refresh_token")] RefreshToken,
+
+        [Description("authorization_code")] AuthorizationCode
     }
 }

@@ -20,11 +20,35 @@ namespace OAuth20.Server.Models
                 ClientId = "1",
                 ClientSecret = "123456789",
                 AllowedScopes = new[]{ "openid", "profile", "blazorWasmapi.readandwrite" },
-                GrantType = GrantTypes.Code,
+                GrantTypes = GrantTypes.Code,
                 IsActive = true,
                 ClientUri = "https://localhost:7026",
                 RedirectUri = "https://localhost:7026/signin-oidc",
                 UsePkce = true,
+            },
+            new Client
+            {
+                ClientName = "openIdtestapp",
+                ClientId = "2",
+                ClientSecret = "123456789",
+                AllowedScopes = new[]{ "openid", "profile", "jwtapitestapp.read", "jwtapitestapp.readandwrite" },
+                GrantTypes = GrantTypes.CodeAndClientCredentials,
+                IsActive = true,
+                ClientUri = "https://localhost:7080",
+                RedirectUri = "https://localhost:7080/signin-oidc",
+                UsePkce = true,
+            },
+              new Client
+            {
+                ClientName = "jwtapitestapp",
+                ClientId = "3",
+                ClientSecret = "123456789",
+                AllowedScopes = new[]{ "" },
+                GrantTypes = GrantTypes.ClientCredentials,
+                IsActive = true,
+                ClientUri = "https://localhost:7080",
+                RedirectUri = "https://localhost:7080/signin-oidc",
+                UsePkce = false,
             }
         };
     }

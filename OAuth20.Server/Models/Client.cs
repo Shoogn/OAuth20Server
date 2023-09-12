@@ -25,7 +25,7 @@ namespace OAuth20.Server.Models
         /// </summary>
         public string ClientSecret { get; set; }
 
-        public IList<string> GrantType { get; set; }
+        public IList<string> GrantTypes { get; set; }
 
         /// <summary>
         /// by default false

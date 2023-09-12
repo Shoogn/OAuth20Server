@@ -6,8 +6,6 @@
  of this license document, but changing it is not allowed.
  */
 
-using NuGet.Protocol.Plugins;
-
 namespace OAuth20.Server.Common
 {
     public static class Constants
@@ -47,6 +45,13 @@ namespace OAuth20.Server.Common
         public static class ContentTypeSupported
         {
             public const string XwwwFormUrlEncoded = "application/x-www-form-urlencoded";
+        }
+
+
+        public static class SupportedProvider
+        {
+            public const string InMemoey = "InMemoey";
+            public const string BackStore = "BackStore";
         }
     }
 }

@@ -21,5 +21,9 @@ namespace OAuth20.Server.Models
 
         public static IList<string> RefreshToken =>
             new[] { AuthorizationGrantTypesEnum.RefreshToken.GetEnumDescription() };
+
+        public static IList<string> CodeAndClientCredentials =>
+            new[] { AuthorizationGrantTypesEnum.ClientCredentials.GetEnumDescription(), 
+                AuthorizationGrantTypesEnum.Code.GetEnumDescription() };
     }
 }
