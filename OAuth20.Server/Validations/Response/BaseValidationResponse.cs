@@ -6,17 +6,13 @@
  of this license document, but changing it is not allowed.
  */
 
-using System.Collections.Generic;
-
-namespace OAuth20.Server.Models
+namespace OAuth20.Server.Validations.Response
 {
-    /// <summary>
-    /// This is an APIs applications
-    /// </summary>
-    public class ProtectedResource
+    public abstract class BaseValidationResponse
     {
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public IList<string> AllowScopes { get; set; }
+        public bool Succeeded { get; set; }
+        public string Error { get; set; } = string.Empty;
+        public string ErrorDescription { get; set; }
+        public bool HasError => !string.IsNullOrEmpty(Error);
     }
 }

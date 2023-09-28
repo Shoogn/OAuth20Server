@@ -1,10 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.WebUtilities;
 using OAuth20.Server.Services;
 using OAuth20.Server.Validations;
-using System;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace OAuth20.Server.Controllers
@@ -33,7 +30,7 @@ namespace OAuth20.Server.Controllers
                 return Unauthorized(clientValidationResult.Error);
 
             var tokenRevokeResult = await _tokenRevocationService.RevokeTokenAsync(_httpContextAccessor.HttpContext,
-                clientValidationResult.ClientId);
+                clientValidationResult.Client.ClientId);
 
             if (tokenRevokeResult.Succeeded)
                 return Ok("token_revoked");

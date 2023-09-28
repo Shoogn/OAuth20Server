@@ -8,8 +8,7 @@
 
 namespace OAuth20.Server.Configuration
 {
-   
-    public class OAuthOptions
+    public class OAuthServerOptions
     {
         /// <summary>
         /// This indicate which provider our identity provider will use

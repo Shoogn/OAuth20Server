@@ -56,6 +56,6 @@ namespace OAuth20.Server.OauthRequest
         /// <summary>
         /// Hasher type for <see cref="code_challenge"/>
         /// </summary>
-        public string code_challenege_method { get; set; }
+        public string code_challenge_method { get; set; }
     }
 }

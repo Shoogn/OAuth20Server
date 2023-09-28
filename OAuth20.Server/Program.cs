@@ -53,13 +53,14 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 
-builder.Services.Configure<OAuthOptions>(configServices.GetSection("OAuthOptions"));
+builder.Services.Configure<OAuthServerOptions>(configServices.GetSection("OAuthOptions"));
 builder.Services.AddScoped<IAuthorizeResultService, AuthorizeResultService>();
 builder.Services.AddSingleton<ICodeStoreService, CodeStoreService>();
 builder.Services.AddScoped<IUserManagerService, UserManagerService>();
 builder.Services.AddScoped<ITokenRevocationService, TokenRevocationService>();
+builder.Services.AddScoped<ITokenIntrospectionService, TokenIntrospectionService>();
 builder.Services.TryAddScoped<ITokenRevocationValidation, TokenRevocationValidation>();
-
+builder.Services.TryAddScoped<ITokenIntrospectionValidation, TokenIntrospectionValidation>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.Configure<RouteOptions>(options =>

@@ -1,27 +1,37 @@
-﻿using OAuth20.Server.Models.Context;
+﻿using Microsoft.AspNetCore.Http;
 using OAuth20.Server.Models;
-using Microsoft.AspNetCore.Http;
-using System.Threading.Tasks;
-using System;
-using System.Text;
 using OAuth20.Server.OauthResponse;
 using System.Linq;
+using System;
+using System.Threading.Tasks;
 using OAuth20.Server.Common;
+using System.Text;
+using OAuth20.Server.OauthRequest;
 using OAuth20.Server.Validations.Response;
+using System.Collections;
 
 namespace OAuth20.Server.Validations
 {
-    public class TokenRevocationValidation : ITokenRevocationValidation
+    public class TokenIntrospectionValidation : ITokenIntrospectionValidation
     {
-        private readonly BaseDBContext _dBContext;
         private readonly ClientStore _clientStore = new ClientStore();
-        public TokenRevocationValidation(BaseDBContext dBContext)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public TokenIntrospectionValidation(IHttpContextAccessor httpContextAccessor)
         {
-            _dBContext = dBContext;
+            _httpContextAccessor = httpContextAccessor;
         }
-        public virtual Task<TokenRevocationValidationResponse> ValidateAsync(HttpContext context)
+        public virtual Task<TokenIntrospectionValidationResponse> ValidateAsync(TokenIntrospectionRequest tokenIntrospectionRequest)
         {
-            var response = new TokenRevocationValidationResponse { Succeeded = true };
+            var response = new TokenIntrospectionValidationResponse() { Succeeded = true };
+            var context = _httpContextAccessor.HttpContext;
+            var requestContentType = context.Request.ContentType;
+            if (!requestContentType.Equals(Constants.ContentTypeSupported.XwwwFormUrlEncoded))
+            {
+                response.Succeeded = false;
+                response.Error = "Content Type is not supported";
+                return Task.FromResult(response);
+            }
+
             var authorizationHeader = context.Request.Headers["Authorization"].ToString();
             if (authorizationHeader == null)
             {
@@ -69,6 +79,7 @@ namespace OAuth20.Server.Validations
                 return Task.FromResult(response);
             }
             return Task.FromResult(response);
+
         }
 
 
@@ -85,10 +96,11 @@ namespace OAuth20.Server.Validations
 
                 if (client != null)
                 {
+
                     // I have to check is the client has ClientCredentials Grant Type
                     //var clientGrantTypes = client.GrantTypes;
                     //bool clientGrantTypesCheckResult = clientGrantTypes.Contains(AuthorizationGrantTypesEnum.ClientCredentials.GetEnumDescription());
-                    //if (clientGrantTypesCheckResult == false)
+                    //if(clientGrantTypesCheckResult == false)
                     //{
                     //    result.Error = ErrorTypeEnum.InvalidGrant.GetEnumDescription();
                     //    return result;

@@ -37,5 +37,10 @@ namespace OAuth20.Server.Models
         public string RedirectUri { get; set; }
 
         public bool UsePkce { get; set; }
+
+        /// <summary>
+        /// Get or set the name of the clients/protected resource that are releated to this Client.
+        /// </summary>
+        public IList<string> AllowedProtectedResources { get; set; }
     }
 }

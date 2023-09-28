@@ -35,12 +35,12 @@ namespace OAuth20.Server.Services
         // for encrypted key see: https://stackoverflow.com/questions/18223868/how-to-encrypt-jwt-security-token
         private readonly ClientStore _clientStore = new ClientStore();
         private readonly ICodeStoreService _codeStoreService;
-        private readonly OAuthOptions _options;
+        private readonly OAuthServerOptions _options;
         private readonly BaseDBContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         public AuthorizeResultService(ICodeStoreService codeStoreService,
-            IOptions<OAuthOptions> options,
+            IOptions<OAuthServerOptions> options,
             BaseDBContext context,
             IHttpContextAccessor httpContextAccessor)
         {
@@ -113,7 +113,7 @@ namespace OAuth20.Server.Services
                 RequestedScopes = clientScopes.ToList(),
                 Nonce = nonce,
                 CodeChallenge = authorizationRequest.code_challenge,
-                CodeChallengeMethod = authorizationRequest.code_challenege_method,
+                CodeChallengeMethod = authorizationRequest.code_challenge_method,
                 CreationTime = DateTime.UtcNow,
                 Subject = httpContextAccessor.HttpContext.User //as ClaimsPrincipal
 
@@ -295,7 +295,7 @@ namespace OAuth20.Server.Services
                 JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
 
                 var token = new JwtSecurityToken(_options.IDPUri, checkClientResult.Client.ClientId, claims,
-                    expires: DateTime.UtcNow.AddMinutes(int.Parse("5")), signingCredentials: new
+                    expires: DateTime.UtcNow.AddMinutes(int.Parse("50")), signingCredentials: new
                     SigningCredentials(rsaSecurityKey, SecurityAlgorithms.RsaSha256));
 
                 id_token = handler.WriteToken(token);
@@ -389,9 +389,10 @@ namespace OAuth20.Server.Services
 
             if (tokenType == Constants.TokenTypes.JWTAcceseccToken)
             {
-                var claims_at = new List<Claim>();
-                foreach (var item in scopes)
-                    claims_at.Add(new Claim("scopes", item));
+                var claims_at = new List<Claim>
+                {
+                    new Claim("scope", string.Join(' ', scopes))
+                };
 
                 RSACryptoServiceProvider provider1 = new RSACryptoServiceProvider();
 
@@ -401,8 +402,8 @@ namespace OAuth20.Server.Services
                 RsaSecurityKey rsaSecurityKey1 = new RsaSecurityKey(provider1);
                 JwtSecurityTokenHandler handler1 = new JwtSecurityTokenHandler();
 
-                var token1 = new JwtSecurityToken(_options.IDPUri, client.ClientUri, claims_at,
-                    expires: DateTime.UtcNow.AddMinutes(int.Parse("5")), signingCredentials: new
+                var token1 = new JwtSecurityToken(_options.IDPUri, client.ClientUri, claims_at, notBefore: DateTime.UtcNow,
+                    expires: DateTime.UtcNow.AddMinutes(int.Parse("50")), signingCredentials: new
                     SigningCredentials(rsaSecurityKey1, SecurityAlgorithms.RsaSha256));
 
                 string access_token = handler1.WriteToken(token1);

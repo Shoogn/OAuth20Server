@@ -6,12 +6,26 @@
  of this license document, but changing it is not allowed.
  */
 
+using System;
 using System.Collections.Generic;
 
 namespace OAuth20.Server.Models
 {
     public class ClientStore
     {
+        protected static readonly Lazy<ClientStore> _lazyInstance = new Lazy<ClientStore>(() => new ClientStore());
+
+        /// <summary>
+        /// Get the Singleton Instance for this Object.
+        /// </summary>
+        public static ClientStore Instance
+        {
+            get
+            {
+                return _lazyInstance.Value;
+            }
+        }
+
         public IEnumerable<Client> Clients = new[]
         {
             new Client
@@ -31,19 +45,20 @@ namespace OAuth20.Server.Models
                 ClientName = "openIdtestapp",
                 ClientId = "2",
                 ClientSecret = "123456789",
-                AllowedScopes = new[]{ "openid", "profile", "jwtapitestapp.read", "jwtapitestapp.readandwrite" },
+                AllowedScopes = new[]{ "openid", "profile", "jwtapitestapp.read" },
                 GrantTypes = GrantTypes.CodeAndClientCredentials,
                 IsActive = true,
                 ClientUri = "https://localhost:7276",
                 RedirectUri = "https://localhost:7276/signin-oidc",
                 UsePkce = true,
+               // AllowedProtectedResources = new[]{ "jwtapitestapp" },
             },
               new Client
             {
                 ClientName = "jwtapitestapp",
                 ClientId = "3",
                 ClientSecret = "123456789",
-                AllowedScopes = new[]{ "" },
+                AllowedScopes = new[]{ "jwtapitestapp.read", "jwtapitestapp.wite", "jwtapitestapp.readandwrite" },
                 GrantTypes = GrantTypes.ClientCredentials,
                 IsActive = true,
                 ClientUri = "https://localhost:7065",

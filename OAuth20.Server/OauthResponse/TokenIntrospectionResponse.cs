@@ -11,7 +11,7 @@ namespace OAuth20.Server.OauthResponse
     public class TokenIntrospectionResponse
     {
         /// <summary>
-        /// Is Token Active
+        /// Is Token Active / Required parameter
         /// </summary>
         public bool Active { get; set; }
 

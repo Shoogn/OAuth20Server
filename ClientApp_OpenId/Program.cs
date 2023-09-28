@@ -22,6 +22,7 @@ builder.Services.AddAuthentication(options =>
         options.ResponseType = "code";
         options.CallbackPath = "/signin-oidc";
         options.SaveTokens = true;
+        options.Scope.Add("jwtapitestapp.read");
     });
 
 

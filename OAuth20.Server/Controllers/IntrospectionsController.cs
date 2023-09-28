@@ -1,24 +1,26 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using OAuth20.Server.OauthRequest;
+using OAuth20.Server.Services;
+using System.Threading.Tasks;
 
 namespace OAuth20.Server.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
+    //[Route("api/[controller]")]
+   // [ApiController]
     public class IntrospectionsController : ControllerBase
     {
-        private readonly IHttpContextAccessor _contextAccessor;
-        public IntrospectionsController(IHttpContextAccessor contextAccessor)
+        private readonly ITokenIntrospectionService _tokenIntrospectionService;
+        public IntrospectionsController(ITokenIntrospectionService tokenIntrospectionService)
         {
-            _contextAccessor = contextAccessor;
+            _tokenIntrospectionService = tokenIntrospectionService;
         }
 
-
-        //[HttpPost("introspect")]
-        //public IActionResult TokenIntrospect()
-        //{
-
-        //    return new JsonResult();
-        //}
+       // [HttpPost("TokenIntrospect")]
+        [HttpPost]
+        public async Task<IActionResult> TokenIntrospect(TokenIntrospectionRequest tokenIntrospectionRequest)
+        {
+            var result = await _tokenIntrospectionService.IntrospectTokenAsync(tokenIntrospectionRequest);
+            return Ok(result);
+        }
     }
 }
