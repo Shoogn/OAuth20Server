@@ -11,7 +11,7 @@ namespace ProtectedResourceApp_JwtBearer.Controllers
         [HttpGet("GetDummyData")]
         public IActionResult GetDummyData()
         {
-            string result = "Calling to this endpoint at https://localhost:7065 is done sucssefully";
+            string result = "Calling to this endpoint at https://localhost:7065 is done successfully";
             return Ok(result);
         }
     }

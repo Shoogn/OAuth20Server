@@ -7,11 +7,9 @@ namespace OpenIdTestApp.Controllers
 
     public class HomeController : Controller
     {
-       // [Authorize]
-        public async Task<IActionResult> Index()
+        [Authorize]
+        public IActionResult Index()
         {
-            string t3 = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6Imp3dGFwaXRlc3RhcHAucmVhZCIsImV4cCI6MTY5NTkwMDAyMSwiaXNzIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NzI3NSIsImF1ZCI6Imh0dHBzOi8vbG9jYWxob3N0OjcyNzYifQ.tET_-uTdERrwj2YFwNyH8Re16ec67rfzNpNj2IWHX0fVDneMo6acadgnFqLz4FtwZkox-IHA90TRj713QlTQ1UhTpuQHGm-76Ro5HbniBd6fow18s4PMCTyJsLtYSOyh1kNmtpO76deSDu1czXHM0pK-YbgFTfpTrFE_o-z7P8Q";
-            bool y = await TokenIntrospection(t3 ?? "");
             return View();
         }
 
@@ -21,7 +19,7 @@ namespace OpenIdTestApp.Controllers
         {
             string? access_token = await getToken();
             string? res = await getDataFromApi(access_token ?? "");
-            return View(res);
+            return View("Index", res);
         }
 
         private async Task<string?> getToken()
@@ -94,7 +92,7 @@ namespace OpenIdTestApp.Controllers
             }
         }
 
-
+        // For reference only
         private async Task<bool> TokenIntrospection(string token)
         {
             using (var client = new HttpClient())
@@ -132,8 +130,6 @@ namespace OpenIdTestApp.Controllers
                // res.EnsureSuccessStatusCode(); // If not success it will throw HttpRequestException
                 string responseBody = await res.Content.ReadAsStringAsync();
 
-
-                //var result = System.Text.Json.JsonSerializer.Deserialize<OAuthCallingResult>(responseBody);
                 return true;
             }
         }

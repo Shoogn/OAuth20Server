@@ -15,7 +15,7 @@ public class TokenIntrospectionRequest
     /// <summary>
     /// Get or set token type hint.
     /// </summary>
-
+    [JsonInclude]
     [JsonPropertyName("token_type_hint")]
     public string TokenTypeHint { get; set; }
 }

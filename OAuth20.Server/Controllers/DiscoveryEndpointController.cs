@@ -43,7 +43,8 @@ namespace OAuth20.Server.Controllers
                     "locale", "zoneinfo" },
                 claims_parameter_supported = true,
                 service_documentation = "https://localhost:7275/connect/service_documentation.html",
-                ui_locales_supported = new string[] { "en-US", "en-GB", "en-CA", "fr-FR", "fr-CA" }
+                ui_locales_supported = new string[] { "en-US", "en-GB", "en-CA", "fr-FR", "fr-CA" },
+                introspection_endpoint = "https://localhost:7275/Introspections/TokenIntrospect"
 
             };
 

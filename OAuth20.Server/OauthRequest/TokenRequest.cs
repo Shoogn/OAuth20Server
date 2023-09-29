@@ -19,6 +19,6 @@ namespace OAuth20.Server.OauthRequest
         public string grant_type { get; set; }
         public string redirect_uri { get; set; }
         public string code_verifier { get; set; }
-        public IList<string> scopes { get; set; }
+        public IList<string> scope { get; set; }
     }
 }

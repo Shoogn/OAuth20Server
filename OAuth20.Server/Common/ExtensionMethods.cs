@@ -35,5 +35,10 @@ namespace OAuth20.Server.Common
 
             return false;
         }
+
+        public static bool StringIsNullOrWhiteSpace(this string value)
+        {
+            return string.IsNullOrWhiteSpace(value);
+        }
     }
 }

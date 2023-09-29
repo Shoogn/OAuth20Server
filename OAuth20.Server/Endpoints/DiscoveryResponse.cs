@@ -39,5 +39,6 @@ namespace OAuth20.Server.Endpoints
         public bool claims_parameter_supported { get; set; }
         public string service_documentation { get; set; }
         public IList<string> ui_locales_supported { get; set; }
+        public string introspection_endpoint { get; set; }
     }
 }
