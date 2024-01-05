@@ -14,18 +14,18 @@ namespace OAuth20.Server.Common
     {
         public static IList<string> CodeChallenegMethodsSupport = new List<string>()
         {
-            Constants.Plain,
-            Constants.SHA256
+            Constants.ChallengeMethod.Plain,
+            Constants.ChallengeMethod.SHA256
         };
 
 
         public static IList<string> OpenIdConnectScopes = new List<string>()
         {
-            Constants.OpenId,
-            Constants.Profile,
-            Constants.Email,
-            Constants.Address,
-            Constants.Phone
+            Constants.OpenIdConnectScopes. OpenId,
+            Constants.OpenIdConnectScopes.Profile,
+            Constants.OpenIdConnectScopes.Email,
+            Constants.OpenIdConnectScopes.Address,
+            Constants.OpenIdConnectScopes.Phone
         };
     }
 }

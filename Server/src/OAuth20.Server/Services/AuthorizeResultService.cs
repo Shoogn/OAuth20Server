@@ -354,7 +354,7 @@ namespace OAuth20.Server.Services
         {
             var odeVerifireAsByte = Encoding.ASCII.GetBytes(codeVerifier);
 
-            if (codeChallengeMethod == Constants.Plain)
+            if (codeChallengeMethod == Constants.ChallengeMethod.Plain)
             {
                 using var shaPalin = SHA256.Create();
                 var computedHashPalin = shaPalin.ComputeHash(odeVerifireAsByte);
