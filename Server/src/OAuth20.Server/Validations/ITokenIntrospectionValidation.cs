@@ -14,6 +14,6 @@ namespace OAuth20.Server.Validations
 {
     public interface ITokenIntrospectionValidation
     {
-        Task<TokenIntrospectionValidationResponse> ValidateAsync(TokenIntrospectionRequest tokenIntrospectionReques);
+        Task<TokenIntrospectionValidationResponse> ValidateAsync(TokenIntrospectionRequest tokenIntrospectionRequest);
     }
 }

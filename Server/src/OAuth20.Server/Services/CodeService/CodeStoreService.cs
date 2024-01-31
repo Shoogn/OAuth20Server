@@ -14,14 +14,14 @@ using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 
-namespace OAuth20.Server.Services.CodeServce
+namespace OAuth20.Server.Services.CodeService
 {
     public class CodeStoreService : ICodeStoreService
     {
         private readonly ConcurrentDictionary<string, AuthorizationCode> _codeIssued = new ConcurrentDictionary<string, AuthorizationCode>();
         private readonly ClientStore _clientStore = new ClientStore();
 
-        // Here I genrate the code for authorization, and I will store it 
+        // Here I generate the code for authorization, and I will store it 
         // in the Concurrent Dictionary
 
         public string GenerateAuthorizationCode(AuthorizationCode authorizationCode)

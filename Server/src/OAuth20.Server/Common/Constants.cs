@@ -51,7 +51,7 @@ namespace OAuth20.Server.Common
 
         public static class SupportedProvider
         {
-            public const string InMemoey = "InMemoey";
+            public const string InMemory = "InMemory";
             public const string BackStore = "BackStore";
         }
     }

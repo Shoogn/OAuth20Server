@@ -12,7 +12,7 @@ namespace OAuth20.Server.Common
 {
     public class OAuth2ServerHelpers
     {
-        public static IList<string> CodeChallenegMethodsSupport = new List<string>()
+        public static IList<string> CodeChallengeMethodsSupport = new List<string>()
         {
             Constants.Plain,
             Constants.SHA256

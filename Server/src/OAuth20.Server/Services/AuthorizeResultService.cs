@@ -16,7 +16,7 @@ using OAuth20.Server.Models.Context;
 using OAuth20.Server.Models.Entities;
 using OAuth20.Server.OauthRequest;
 using OAuth20.Server.OauthResponse;
-using OAuth20.Server.Services.CodeServce;
+using OAuth20.Server.Services.CodeService;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -166,8 +166,8 @@ namespace OAuth20.Server.Services
                 {
                     if (checkWithSecret && !string.IsNullOrEmpty(clientSecret))
                     {
-                        bool hasSamesecretId = client.ClientSecret.Equals(clientSecret, StringComparison.InvariantCulture);
-                        if (!hasSamesecretId)
+                        bool hasSameSecretId = client.ClientSecret.Equals(clientSecret, StringComparison.InvariantCulture);
+                        if (!hasSameSecretId)
                         {
                             result.Error = ErrorTypeEnum.InvalidClient.GetEnumDescription();
                             return result;
@@ -184,7 +184,7 @@ namespace OAuth20.Server.Services
                     }
                     else
                     {
-                        result.ErrorDescription = ErrorTypeEnum.UnAuthoriazedClient.GetEnumDescription();
+                        result.ErrorDescription = ErrorTypeEnum.UnAuthorizedClient.GetEnumDescription();
                         return result;
                     }
                 }
@@ -199,9 +199,9 @@ namespace OAuth20.Server.Services
         {
 
             var result = new TokenResponse();
-            var serchBySecret = searchForClientBySecret(tokenRequest.grant_type);
+            var searchBySecret = SearchForClientBySecret(tokenRequest.grant_type);
 
-            var checkClientResult = this.VerifyClientById(tokenRequest.client_id, serchBySecret, tokenRequest.client_secret, tokenRequest.grant_type);
+            var checkClientResult = this.VerifyClientById(tokenRequest.client_id, searchBySecret, tokenRequest.client_secret, tokenRequest.grant_type);
             if (!checkClientResult.IsSuccess)
             {
                 return new TokenResponse { Error = checkClientResult.Error, ErrorDescription = checkClientResult.ErrorDescription };
@@ -220,8 +220,8 @@ namespace OAuth20.Server.Services
                 }
                 IEnumerable<string> scopes = checkClientResult.Client.AllowedScopes.Intersect(tokenRequest.scope);
 
-                var clientCredentialAccessTokenResult = generateJWTTokne(scopes, Constants.TokenTypes.JWTAcceseccToken, checkClientResult.Client);
-                SaveJWTTokenInBackStore(checkClientResult.Client.ClientId, clientCredentialAccessTokenResult.AccessToken, clientCredentialAccessTokenResult.ExpirationDate);
+                var clientCredentialAccessTokenResult = GenerateJwtToken(scopes, Constants.TokenTypes.JWTAcceseccToken, checkClientResult.Client);
+                SaveJwtTokenInBackStore(checkClientResult.Client.ClientId, clientCredentialAccessTokenResult.AccessToken, clientCredentialAccessTokenResult.ExpirationDate);
 
                 result.access_token = clientCredentialAccessTokenResult.AccessToken;
                 result.id_token = null; // I have to use data shaping here to remove this property or I can customize the return data in the json result, but for now null is ok.
@@ -247,7 +247,7 @@ namespace OAuth20.Server.Services
 
             if (checkClientResult.Client.UsePkce)
             {
-                var pkceResult = codeVerifierIsSendByTheClientThatReceivedTheCode(tokenRequest.code_verifier,
+                var pkceResult = CodeVerifierIsSendByTheClientThatReceivedTheCode(tokenRequest.code_verifier,
                     clientCodeChecker.CodeChallenge, clientCodeChecker.CodeChallengeMethod);
 
                 if (!pkceResult)
@@ -255,7 +255,7 @@ namespace OAuth20.Server.Services
             }
 
 
-            string id_token = string.Empty;
+            string idToken = string.Empty;
             if (clientCodeChecker.IsOpenId)
             {
                 if (!clientCodeChecker.Subject.Identity.IsAuthenticated)
@@ -296,7 +296,7 @@ namespace OAuth20.Server.Services
                     expires: DateTime.UtcNow.AddMinutes(int.Parse("50")), signingCredentials: new
                     SigningCredentials(rsaSecurityKey, SecurityAlgorithms.RsaSha256));
 
-                id_token = handler.WriteToken(token);
+                idToken = handler.WriteToken(token);
 
                 var idptoken = new OAuthTokenEntity
                 {
@@ -304,7 +304,7 @@ namespace OAuth20.Server.Services
                     CreationDate = DateTime.Now,
                     ReferenceId = Guid.NewGuid().ToString(),
                     Status = Constants.Statuses.Valid,
-                    Token = id_token,
+                    Token = idToken,
                     TokenType = Constants.TokenTypes.JWTIdentityToken,
                     ExpirationDate = token.ValidTo,
                     SubjectId = userId,
@@ -315,24 +315,24 @@ namespace OAuth20.Server.Services
 
             }
 
-            var scopesinJWtAccessToken = from m in clientCodeChecker.RequestedScopes.ToList()
+            var scopesInJWtAccessToken = from m in clientCodeChecker.RequestedScopes.ToList()
                                          where !OAuth2ServerHelpers.OpenIdConnectScopes.Contains(m)
                                          select m;
 
-            var accessTokenResult = generateJWTTokne(scopesinJWtAccessToken, Constants.TokenTypes.JWTAcceseccToken, checkClientResult.Client);
-            SaveJWTTokenInBackStore(checkClientResult.Client.ClientId, accessTokenResult.AccessToken, accessTokenResult.ExpirationDate);
+            var accessTokenResult = GenerateJwtToken(scopesInJWtAccessToken, Constants.TokenTypes.JWTAcceseccToken, checkClientResult.Client);
+            SaveJwtTokenInBackStore(checkClientResult.Client.ClientId, accessTokenResult.AccessToken, accessTokenResult.ExpirationDate);
 
             // here remove the code from the Concurrent Dictionary
             _codeStoreService.RemoveClientDataByCode(tokenRequest.code);
 
             result.access_token = accessTokenResult.AccessToken;
-            result.id_token = id_token;
+            result.id_token = idToken;
             result.code = tokenRequest.code;
             return result;
         }
 
 
-        private int SaveJWTTokenInBackStore(string clientId, string accessToken, DateTime expireIn)
+        private int SaveJwtTokenInBackStore(string clientId, string accessToken, DateTime expireIn)
         {
             var atoken = new OAuthTokenEntity
             {
@@ -350,27 +350,27 @@ namespace OAuth20.Server.Services
             return _context.SaveChanges();
         }
 
-        private bool codeVerifierIsSendByTheClientThatReceivedTheCode(string codeVerifier, string codeChallenge, string codeChallengeMethod)
+        private bool CodeVerifierIsSendByTheClientThatReceivedTheCode(string codeVerifier, string codeChallenge, string codeChallengeMethod)
         {
-            var odeVerifireAsByte = Encoding.ASCII.GetBytes(codeVerifier);
+            var codeVerifyAsByte = Encoding.ASCII.GetBytes(codeVerifier);
 
             if (codeChallengeMethod == Constants.Plain)
             {
                 using var shaPalin = SHA256.Create();
-                var computedHashPalin = shaPalin.ComputeHash(odeVerifireAsByte);
+                var computedHashPalin = shaPalin.ComputeHash(codeVerifyAsByte);
                 var tranformedResultPalin = Base64UrlEncoder.Encode(computedHashPalin);
                 return tranformedResultPalin.Equals(codeChallenge);
             }
 
             using var shaS256 = SHA256.Create();
-            var computedHashS256 = shaS256.ComputeHash(odeVerifireAsByte);
+            var computedHashS256 = shaS256.ComputeHash(codeVerifyAsByte);
             var tranformedResultS256 = Base64UrlEncoder.Encode(computedHashS256);
 
             return tranformedResultS256.Equals(codeChallenge);
         }
 
 
-        private bool searchForClientBySecret(string grantType)
+        private bool SearchForClientBySecret(string grantType)
         {
             if (grantType == AuthorizationGrantTypesEnum.ClientCredentials.GetEnumDescription() ||
                 grantType == AuthorizationGrantTypesEnum.RefreshToken.GetEnumDescription() ||
@@ -381,13 +381,13 @@ namespace OAuth20.Server.Services
         }
 
 
-        public TokenResult generateJWTTokne(IEnumerable<string> scopes, string tokenType, Client client)
+        public TokenResult GenerateJwtToken(IEnumerable<string> scopes, string tokenType, Client client)
         {
             var result = new TokenResult();
 
             if (tokenType == Constants.TokenTypes.JWTAcceseccToken)
             {
-                var claims_at = new List<Claim>
+                var claimsAt = new List<Claim>
                 {
                     new Claim("scope", string.Join(' ', scopes))
                 };
@@ -400,13 +400,13 @@ namespace OAuth20.Server.Services
                 RsaSecurityKey rsaSecurityKey1 = new RsaSecurityKey(provider1);
                 JwtSecurityTokenHandler handler1 = new JwtSecurityTokenHandler();
 
-                var token1 = new JwtSecurityToken(_options.IDPUri, client.ClientUri, claims_at, notBefore: DateTime.UtcNow,
+                var token1 = new JwtSecurityToken(_options.IDPUri, client.ClientUri, claimsAt, notBefore: DateTime.UtcNow,
                     expires: DateTime.UtcNow.AddMinutes(int.Parse("50")), signingCredentials: new
                     SigningCredentials(rsaSecurityKey1, SecurityAlgorithms.RsaSha256));
 
-                string access_token = handler1.WriteToken(token1);
+                string accessToken = handler1.WriteToken(token1);
 
-                result.AccessToken = access_token;
+                result.AccessToken = accessToken;
                 result.TokenType = tokenType;
                 result.ExpirationDate = token1.ValidTo;
             }

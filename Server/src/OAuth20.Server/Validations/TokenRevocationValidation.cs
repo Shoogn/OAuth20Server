@@ -55,11 +55,11 @@ namespace OAuth20.Server.Validations
                     response.Error = "Client is not Authorized";
                     return Task.FromResult(response);
                 }
-                string clinetId = authorizationKeys.Substring(0, authorizationResult);
+                string clientId = authorizationKeys.Substring(0, authorizationResult);
                 string clientSecret = authorizationKeys.Substring(authorizationResult + 1);
 
                 // Here I have to get the client from the Client Store
-                CheckClientResult client = VerifyClientById(clinetId, true, clientSecret);
+                CheckClientResult client = VerifyClientById(clientId, true, clientSecret);
                 if (!client.IsSuccess)
                 {
                     response.Succeeded = false;
@@ -105,8 +105,8 @@ namespace OAuth20.Server.Validations
 
                     if (checkWithSecret && !string.IsNullOrEmpty(clientSecret))
                     {
-                        bool hasSamesecretId = client.ClientSecret.Equals(clientSecret, StringComparison.InvariantCulture);
-                        if (!hasSamesecretId)
+                        bool hasSameSecretId = client.ClientSecret.Equals(clientSecret, StringComparison.InvariantCulture);
+                        if (!hasSameSecretId)
                         {
                             result.Error = ErrorTypeEnum.InvalidClient.GetEnumDescription();
                             return result;
@@ -123,7 +123,7 @@ namespace OAuth20.Server.Validations
                     }
                     else
                     {
-                        result.ErrorDescription = ErrorTypeEnum.UnAuthoriazedClient.GetEnumDescription();
+                        result.ErrorDescription = ErrorTypeEnum.UnAuthorizedClient.GetEnumDescription();
                         return result;
                     }
                 }

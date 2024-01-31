@@ -8,7 +8,7 @@
 
 namespace OAuth20.Server.OauthResponse
 {
-    public class TokenRecovationResponse
+    public class TokenRevocationResponse
     {
         public bool Succeeded { get; set; }
         public string Error { get; set; } = string.Empty;

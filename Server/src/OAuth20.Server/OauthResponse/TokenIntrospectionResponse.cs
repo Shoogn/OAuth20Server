@@ -17,7 +17,7 @@ namespace OAuth20.Server.OauthResponse
 
         /// <summary>
         /// Associated scopes with this token,
-        /// Return as space-sperated list
+        /// Return as space-separated list
         /// </summary>
         public string Scope { get; set; }
 

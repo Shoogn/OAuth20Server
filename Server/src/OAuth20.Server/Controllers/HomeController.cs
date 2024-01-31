@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using OAuth20.Server.Models.Entities;
 using OAuth20.Server.OauthRequest;
 using OAuth20.Server.Services;
-using OAuth20.Server.Services.CodeServce;
+using OAuth20.Server.Services.CodeService;
 using OAuth20.Server.Services.Users;
 using System.Threading.Tasks;
 

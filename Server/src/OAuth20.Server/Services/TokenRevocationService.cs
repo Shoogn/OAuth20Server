@@ -25,9 +25,9 @@ namespace OAuth20.Server.Services
             _dbContext = context;
         }
 
-        public async Task<TokenRecovationResponse> RevokeTokenAsync(HttpContext httpContext, string clientId)
+        public async Task<TokenRevocationResponse> RevokeTokenAsync(HttpContext httpContext, string clientId)
         {
-            var response = new TokenRecovationResponse() { Succeeded = true };
+            var response = new TokenRevocationResponse() { Succeeded = true };
             if (httpContext.Request.ContentType != Constants.ContentTypeSupported.XwwwFormUrlEncoded)
             {
                 response.Succeeded = false;

@@ -12,7 +12,7 @@ namespace OAuth20.Server.Configuration
     {
         /// <summary>
         /// This indicate which provider our identity provider will use
-        /// InMemoey Or BackStore
+        /// InMemory Or BackStore
         /// </summary>
         public string Provider { get; set; }
 

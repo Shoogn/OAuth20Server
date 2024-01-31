@@ -14,6 +14,6 @@ namespace OAuth20.Server.Services
 {
     public interface ITokenRevocationService
     {
-        Task<TokenRecovationResponse> RevokeTokenAsync(HttpContext httpContext, string clientId);
+        Task<TokenRevocationResponse> RevokeTokenAsync(HttpContext httpContext, string clientId);
     }
 }

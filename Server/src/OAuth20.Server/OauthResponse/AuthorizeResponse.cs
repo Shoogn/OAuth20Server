@@ -13,7 +13,7 @@ namespace OAuth20.Server.OauthResponse
     public class AuthorizeResponse
     {
         /// <summary>
-        /// code or implicit grant or client creditional 
+        /// code or implicit grant or client credential 
         /// </summary>
         public string ResponseType { get; set; } 
         public string Code { get; set; }

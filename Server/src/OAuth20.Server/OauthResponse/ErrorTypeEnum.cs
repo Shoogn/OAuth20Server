@@ -15,7 +15,7 @@ namespace OAuth20.Server.OauthResponse
         InvalidRequest,
 
         [Description("unauthorized_client")]
-        UnAuthoriazedClient,
+        UnAuthorizedClient,
 
         [Description("access_denied")]
         AccessDenied,

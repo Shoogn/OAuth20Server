@@ -48,8 +48,8 @@ namespace OAuth20.Server.Services.Users
 
             if (user == null)
             {
-                _logger.LogInformation("creditioanl {userName}", request.UserName);
-                return new LoginResponse { Error = "No user has this creditioanl" };
+                _logger.LogInformation("credential {userName}", request.UserName);
+                return new LoginResponse { Error = "No user has this credential" };
             }
 
             await _signInManager.SignOutAsync();

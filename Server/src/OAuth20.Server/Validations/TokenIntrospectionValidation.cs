@@ -117,8 +117,8 @@ namespace OAuth20.Server.Validations
 
                     if (checkWithSecret && !string.IsNullOrEmpty(clientSecret))
                     {
-                        bool hasSamesecretId = client.ClientSecret.Equals(clientSecret, StringComparison.InvariantCulture);
-                        if (!hasSamesecretId)
+                        bool hasSameSecretId = client.ClientSecret.Equals(clientSecret, StringComparison.InvariantCulture);
+                        if (!hasSameSecretId)
                         {
                             result.Error = ErrorTypeEnum.InvalidClient.GetEnumDescription();
                             return result;
@@ -135,7 +135,7 @@ namespace OAuth20.Server.Validations
                     }
                     else
                     {
-                        result.ErrorDescription = ErrorTypeEnum.UnAuthoriazedClient.GetEnumDescription();
+                        result.ErrorDescription = ErrorTypeEnum.UnAuthorizedClient.GetEnumDescription();
                         return result;
                     }
                 }
