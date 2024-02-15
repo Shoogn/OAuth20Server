@@ -1,8 +1,15 @@
-﻿@model string
+﻿
 @{
     ViewData["Title"] = "Error";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <h1>Error</h1>
+
+<hr />
+
+<h3>
+    @if(Model != null)
+        @Html.TextBox("error", null, new { @class = "readonly" })
+</h3>
 

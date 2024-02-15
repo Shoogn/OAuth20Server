@@ -103,8 +103,8 @@ namespace OAuth20.Server.Controllers
                     return Redirect(loginRequest.RedirectUri);
                 }
             }
-
-            return RedirectToAction("Error", new { error = "invalid_request" });
+            return View("Error", new { error = "invalid_request" });
+            //return RedirectToAction("Error", new { error = "invalid_request" });
         }
 
         [HttpPost]

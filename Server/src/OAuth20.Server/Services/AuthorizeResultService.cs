@@ -31,18 +31,20 @@ namespace OAuth20.Server.Services
     public class AuthorizeResultService : IAuthorizeResultService
     {
         // for encrypted key see: https://stackoverflow.com/questions/18223868/how-to-encrypt-jwt-security-token
-        private readonly ClientStore _clientStore = new ClientStore();
         private readonly ICodeStoreService _codeStoreService;
+        private readonly IClientService _clientService;
         private readonly OAuthServerOptions _options;
         private readonly BaseDBContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         public AuthorizeResultService(ICodeStoreService codeStoreService,
+            IClientService clientService,
             IOptions<OAuthServerOptions> options,
             BaseDBContext context,
             IHttpContextAccessor httpContextAccessor)
         {
             _codeStoreService = codeStoreService;
+            _clientService = clientService;
             _options = options.Value;
             _context = context;
             _httpContextAccessor = httpContextAccessor;
@@ -57,7 +59,7 @@ namespace OAuth20.Server.Services
                 return response;
             }
 
-            var client = VerifyClientById(authorizationRequest.client_id);
+            var client = _clientService.VerifyClientById(authorizationRequest.client_id);
             if (!client.IsSuccess)
             {
                 response.Error = client.ErrorDescription;
@@ -80,8 +82,13 @@ namespace OAuth20.Server.Services
 
 
             // check the return url is match the one that in the client store
-
-
+            bool redirectUriIsMatched = client.Client.RedirectUri.Equals(authorizationRequest.redirect_uri,StringComparison.OrdinalIgnoreCase);
+            if(!redirectUriIsMatched)
+            {
+                response.Error = ErrorTypeEnum.InvalidRequest.GetEnumDescription();
+                response.ErrorDescription = "redirect uri is not matched the one in the client store";
+                return response;
+            }
             // check the scope in the client store with the
             // one that is comming from the request MUST be matched at leaset one
 
@@ -132,76 +139,13 @@ namespace OAuth20.Server.Services
             return response;
         }
 
-        private CheckClientResult VerifyClientById(string clientId, bool checkWithSecret = false, string clientSecret = null, string grantType = null)
-        {
-            CheckClientResult result = new CheckClientResult() { IsSuccess = false };
-
-            if (!string.IsNullOrWhiteSpace(grantType) && grantType == AuthorizationGrantTypesEnum.ClientCredentials.GetEnumDescription())
-            {
-                var data = _httpContextAccessor.HttpContext;
-                var authHeader = data.Request.Headers["Authorization"].ToString();
-                if (authHeader == null)
-                    return result;
-                if (!authHeader.StartsWith("Basic", StringComparison.OrdinalIgnoreCase))
-                    return result;
-
-                var parameters = authHeader.Substring("Basic ".Length);
-                var authorizationKeys = Encoding.UTF8.GetString(Convert.FromBase64String(parameters));
-
-                var authorizationResult = authorizationKeys.IndexOf(':');
-                if (authorizationResult == -1)
-                    return result;
-                clientId = authorizationKeys.Substring(0, authorizationResult);
-                clientSecret = authorizationKeys.Substring(authorizationResult + 1);
-
-            }
-
-
-
-            if (!string.IsNullOrWhiteSpace(clientId))
-            {
-                var client = _clientStore.Clients.Where(x => x.ClientId.Equals(clientId, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
-
-                if (client != null)
-                {
-                    if (checkWithSecret && !string.IsNullOrEmpty(clientSecret))
-                    {
-                        bool hasSamesecretId = client.ClientSecret.Equals(clientSecret, StringComparison.InvariantCulture);
-                        if (!hasSamesecretId)
-                        {
-                            result.Error = ErrorTypeEnum.InvalidClient.GetEnumDescription();
-                            return result;
-                        }
-                    }
-                    // check if client is enabled or not
-
-                    if (client.IsActive)
-                    {
-                        result.IsSuccess = true;
-                        result.Client = client;
-
-                        return result;
-                    }
-                    else
-                    {
-                        result.ErrorDescription = ErrorTypeEnum.UnAuthoriazedClient.GetEnumDescription();
-                        return result;
-                    }
-                }
-            }
-
-            result.ErrorDescription = ErrorTypeEnum.AccessDenied.GetEnumDescription();
-            return result;
-        }
-
-
         public TokenResponse GenerateToken(TokenRequest tokenRequest)
         {
 
             var result = new TokenResponse();
-            var serchBySecret = searchForClientBySecret(tokenRequest.grant_type);
+            var serchBySecret = _clientService.SearchForClientBySecret(tokenRequest.grant_type);
 
-            var checkClientResult = this.VerifyClientById(tokenRequest.client_id, serchBySecret, tokenRequest.client_secret, tokenRequest.grant_type);
+            var checkClientResult = _clientService.VerifyClientById(tokenRequest.client_id, serchBySecret, tokenRequest.client_secret, tokenRequest.grant_type);
             if (!checkClientResult.IsSuccess)
             {
                 return new TokenResponse { Error = checkClientResult.Error, ErrorDescription = checkClientResult.ErrorDescription };
@@ -370,15 +314,7 @@ namespace OAuth20.Server.Services
         }
 
 
-        private bool searchForClientBySecret(string grantType)
-        {
-            if (grantType == AuthorizationGrantTypesEnum.ClientCredentials.GetEnumDescription() ||
-                grantType == AuthorizationGrantTypesEnum.RefreshToken.GetEnumDescription() ||
-                grantType == AuthorizationGrantTypesEnum.ClientCredentials.GetEnumDescription())
-                return true;
-
-            return false;
-        }
+      
 
 
         public TokenResult generateJWTTokne(IEnumerable<string> scopes, string tokenType, Client client)
