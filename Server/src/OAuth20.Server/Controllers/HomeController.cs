@@ -70,7 +70,8 @@ namespace OAuth20.Server.Controllers
             {
                 RedirectUri = result.RedirectUri,
                 Code = result.Code,
-                RequestedScopes = result.RequestedScopes,
+                RequestedScopes = result.RequestedScopes
+                
             };
             return View("Login", loginModel);
         }

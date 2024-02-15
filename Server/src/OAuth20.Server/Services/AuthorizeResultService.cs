@@ -69,14 +69,14 @@ namespace OAuth20.Server.Services
             if (string.IsNullOrEmpty(authorizationRequest.response_type) || authorizationRequest.response_type != "code")
             {
                 response.Error = ErrorTypeEnum.InvalidRequest.GetEnumDescription();
-                response.ErrorDescription = "response_type is required or is not valid";
+                response.ErrorDescription = "response type is required or is not valid";
                 return response;
             }
 
             if (!authorizationRequest.redirect_uri.IsRedirectUriStartWithHttps() && !httpContextAccessor.HttpContext.Request.IsHttps)
             {
                 response.Error = ErrorTypeEnum.InvalidRequest.GetEnumDescription();
-                response.ErrorDescription = "redirect_url is not secure, MUST be TLS";
+                response.ErrorDescription = "redirect url is not secure, MUST be TLS";
                 return response;
             }
 
@@ -141,7 +141,6 @@ namespace OAuth20.Server.Services
 
         public TokenResponse GenerateToken(TokenRequest tokenRequest)
         {
-
             var result = new TokenResponse();
             var serchBySecret = _clientService.SearchForClientBySecret(tokenRequest.grant_type);
 

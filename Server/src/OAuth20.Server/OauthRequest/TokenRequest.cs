@@ -6,7 +6,6 @@
  of this license document, but changing it is not allowed.
  */
 
-using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 
 namespace OAuth20.Server.OauthRequest
