@@ -45,14 +45,18 @@ namespace OAuth20.Server.Validations
             {
                 if (postForm.ContainsKey(Constants.AuthenticatedRequestScheme.FormEncodedBodyParameter))
                 {
-                    var token = postForm.Where(x=>x.Key == Constants.AuthenticatedRequestScheme.AuthorizationRequestHeader)
-                        .Select(x=>x.Value).First().ToString();
-                    if(token is not null)
+                    var token = postForm.Where(x => x.Key == Constants.AuthenticatedRequestScheme.AuthorizationRequestHeader)
+                        .Select(x => x.Value).FirstOrDefault();
+                    if(token.Count == 1)
                     {
-                        response.Succeeded = true;
-                        response.Token = token;
-                        response.BearerTokenUsageType = Enumeration.BearerTokenUsageTypeEnum.FormEncodedBodyParameter;
-                        return Task.FromResult(response);
+                        string value = token;
+                        if (value is not null)
+                        {
+                            response.Succeeded = true;
+                            response.Token = value;
+                            response.BearerTokenUsageType = Enumeration.BearerTokenUsageTypeEnum.FormEncodedBodyParameter;
+                            return Task.FromResult(response);
+                        }
                     }
                 }
             }
