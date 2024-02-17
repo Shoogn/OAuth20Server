@@ -12,10 +12,10 @@ using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 using System;
 using System.Text;
-using OAuth20.Server.OauthResponse;
 using System.Linq;
 using OAuth20.Server.Common;
 using OAuth20.Server.Validations.Response;
+using OAuth20.Server.Enumeration;
 
 namespace OAuth20.Server.Validations
 {

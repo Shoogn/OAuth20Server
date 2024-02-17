@@ -8,11 +8,11 @@
 
 using OAuth20.Server.Common;
 using OAuth20.Server.Models;
-using OAuth20.Server.OauthResponse;
 using System.Linq;
 using System.Text;
 using System;
 using Microsoft.AspNetCore.Http;
+using OAuth20.Server.Enumeration;
 
 namespace OAuth20.Server.Services
 {

@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OAuth20.Server.Common;
 using OAuth20.Server.Configuration;
+using OAuth20.Server.Enumeration;
 using OAuth20.Server.Models;
 using OAuth20.Server.Models.Context;
 using OAuth20.Server.Models.Entities;

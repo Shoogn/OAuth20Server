@@ -7,7 +7,7 @@
  */
 
 using System.ComponentModel;
-namespace OAuth20.Server.OauthResponse
+namespace OAuth20.Server.Enumeration
 {
     public enum ErrorTypeEnum : byte
     {

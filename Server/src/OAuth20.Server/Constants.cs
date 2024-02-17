@@ -42,5 +42,12 @@
         {
             public const string XwwwFormUrlEncoded = "application/x-www-form-urlencoded";
         }
+
+        public static class AuthenticatedRequestScheme
+        {
+            public const string AuthorizationRequestHeader = "Beraer";
+            public const string FormEncodedBodyParameter = "access_token";
+            public const string UriQueryParameter = "access_token";
+        }
     }
 }
