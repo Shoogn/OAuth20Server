@@ -30,6 +30,15 @@ namespace OAuth20.Server.Services.Users
             _logger = logger;
         }
 
+        public async Task<AppUser> GetUserAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return null;
+            else
+                return user;
+        }
+
         public async Task<LoginResponse> LoginUserAsync(LoginRequest request)
         {
             var validationResult = validateLoginRequest(request);

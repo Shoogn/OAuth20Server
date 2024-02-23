@@ -6,6 +6,7 @@
  of this license document, but changing it is not allowed.
  */
 
+using OAuth20.Server.Models.Entities;
 using OAuth20.Server.OauthRequest;
 using OAuth20.Server.OauthResponse;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ namespace OAuth20.Server.Services.Users
 {
     public interface IUserManagerService
     {
+        Task<AppUser> GetUserAsync(string userId);
         Task<LoginResponse> LoginUserAsync(LoginRequest request);
         Task<CreateUserResponse> CreateUserAsync(CreateUserRequest request);
         Task<OpenIdConnectLoginResponse> LoginUserByOpenIdAsync(OpenIdConnectLoginRequest request);

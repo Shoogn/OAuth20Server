@@ -9,9 +9,11 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using NuGet.Versioning;
 using OAuth20.Server.Configuration;
 using OAuth20.Server.OauthRequest;
 using OAuth20.Server.OAuthResponse;
+using OAuth20.Server.Services.Users;
 using OAuth20.Server.Validations;
 using System;
 using System.ComponentModel.DataAnnotations;
@@ -33,31 +35,34 @@ public class UserInfoService
     private readonly IBearerTokenUsageTypeValidation _bearerTokenUsageTypeValidation;
     private readonly OAuthServerOptions _optionsMonitor;
     private readonly IClientService _clientService;
+    private readonly IUserManagerService _userManagerService;
 
     public UserInfoService(IHttpContextAccessor httpContextAccessor,
          IBearerTokenUsageTypeValidation bearerTokenUsageTypeValidation,
          IOptionsMonitor<OAuthServerOptions> optionsMonitor,
-         IClientService clientService)
+         IClientService clientService,
+         IUserManagerService userManagerService)
     {
         _httpContextAccessor = httpContextAccessor;
-        _bearerTokenUsageTypeValidation= bearerTokenUsageTypeValidation;
+        _bearerTokenUsageTypeValidation = bearerTokenUsageTypeValidation;
         _optionsMonitor = optionsMonitor.CurrentValue ?? new OAuthServerOptions();
         _clientService = clientService;
+        _userManagerService = userManagerService;
     }
 
     public async Task<UserInfoResponse> GetUserInfoAsync()
     {
+        var response = new UserInfoResponse();
         var bearerTokenUsages = await _bearerTokenUsageTypeValidation.ValidateAsync();
         if (bearerTokenUsages.Succeeded == false)
         {
-            return new UserInfoResponse
-            {
-                Claims = null,
-                Succeeded = false,
-                Error = "no token found",
-                ErrorDescription = "Make sure to add the token as bearer to Authentication header in the request"
 
-            };
+            response.Claims = null;
+            response.Succeeded = false;
+            response.Error = "no token found";
+            response.ErrorDescription = "Make sure to add the token as bearer to Authentication header in the request";
+
+
         }
         else
         {
@@ -72,6 +77,7 @@ public class UserInfoService
             var clientId = jwtSecurityToken.Audiences.FirstOrDefault();
             var client = await _clientService.GetClientByIdAsync(clientId);
 
+            // TODO:
             // check if client is null.
             // check if client is not active.
 
@@ -93,11 +99,21 @@ public class UserInfoService
 
                 if (tokenValidationReslt.IsValid)
                 {
-                    int exp = (int)tokenValidationReslt.Claims.FirstOrDefault(x => x.Key == "exp").Value;
-                    string scope = (tokenValidationReslt.Claims.FirstOrDefault(x => x.Key == "scope").Value).ToString();
-                    string aud = (tokenValidationReslt.Claims.FirstOrDefault(x => x.Key == "aud").Value).ToString();
+                    string userId = tokenValidationReslt.ClaimsIdentity.FindFirst("sub")?.Value;
 
-                    
+                    // TODO:
+                    // check userId is null
+
+                    var user = await _userManagerService.GetUserAsync(userId);
+                    // TODO:
+                    // check user is null
+
+
+                    // here build the response as json
+
+                    string scope = (tokenValidationReslt.Claims.FirstOrDefault(x => x.Key == "scope").Value).ToString();
+
+
                     //response.Active = true;
                     //response.TokenType = "access_token";
                     //response.Exp = exp;
@@ -110,19 +126,15 @@ public class UserInfoService
             }
             catch (Exception ex) // maybe SecurityTokenException
             {
-                //_logger.LogCritical("There is an exception that is thrown while validating the token {exception}", ex);
-                //response.Active = false;
-                return new UserInfoResponse
-                {
-                    Claims = null,
-                    Succeeded = false,
-                    Error = "invalid_token",
-                    ErrorDescription = "token is not valid"
-
-                };
+                response.Claims = null;
+                response.Succeeded = false;
+                response.Error = "invalid_token";
+                response.ErrorDescription = "token is not valid";
             }
 
-            return null;
+
         }
+
+        return response;
     }
 }
