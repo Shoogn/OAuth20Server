@@ -32,7 +32,6 @@ namespace OAuth20.Server.Services
         private readonly ILogger<TokenIntrospectionService> _logger;
         private readonly BaseDBContext _dbContext;
         private readonly OAuthServerOptions _optionsMonitor;
-        private readonly ClientStore _clientStore = new ClientStore();
         public TokenIntrospectionService(
             ITokenIntrospectionValidation tokenIntrospectionValidation,
             ILogger<TokenIntrospectionService> logger,

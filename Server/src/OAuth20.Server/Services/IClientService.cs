@@ -13,32 +13,65 @@ using System.Text;
 using System;
 using Microsoft.AspNetCore.Http;
 using OAuth20.Server.Enumeration;
+using OAuth20.Server.Models.Context;
+using Microsoft.IdentityModel.Tokens;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace OAuth20.Server.Services
 {
     public interface IClientService
     {
-        CheckClientResult VerifyClientById(string clientId, bool checkWithSecret = false,string clientSecret = null,
+        CheckClientResult VerifyClientById(string clientId, bool checkWithSecret = false, string clientSecret = null,
             string grantType = null);
 
         bool SearchForClientBySecret(string grantType);
+        AudienceValidator ValidateAudienceHandler(IEnumerable<string> audiences, SecurityToken securityToken,
+            TokenValidationParameters validationParameters, Client client, string token);
+
+        Task<CheckClientResult> GetClientByIdAsync(string clientId);
     }
 
     public class ClientService : IClientService
     {
         private readonly ClientStore _clientStore = new ClientStore();
         private readonly IHttpContextAccessor _httpContextAccessor;
-        public ClientService(IHttpContextAccessor httpContextAccessor)
+        private readonly BaseDBContext _dbContext;
+        public ClientService(IHttpContextAccessor httpContextAccessor,
+            BaseDBContext context)
         {
             _httpContextAccessor = httpContextAccessor;
+            _dbContext = context;
         }
 
-        public CheckClientResult VerifyClientById(string clientId,  bool checkWithSecret = false, string clientSecret = null, 
+        public Task<CheckClientResult> GetClientByIdAsync(string clientId)
+        {
+            var c = _clientStore.Clients.Where(x => x.ClientId == clientId).FirstOrDefault();
+            var response = new CheckClientResult
+            {
+                Client = c,
+                IsSuccess = true
+            };
+            return Task.FromResult(response);
+            //var client = await _dbContext.OAuthApplications.FirstOrDefaultAsync
+            //    (x=>x.ClientId ==  clientId);
+            //if(client == null)
+            //{
+
+            //}
+            //else
+            //{
+            //   var c = _clientStore.Clients.Where(x => x.ClientId == clientId).FirstOrDefault();
+            //}
+        }
+
+        public CheckClientResult VerifyClientById(string clientId, bool checkWithSecret = false, string clientSecret = null,
             string grantType = null)
         {
             CheckClientResult result = new CheckClientResult() { IsSuccess = false };
 
-            if (!string.IsNullOrWhiteSpace(grantType) && 
+            if (!string.IsNullOrWhiteSpace(grantType) &&
                 grantType == AuthorizationGrantTypesEnum.ClientCredentials.GetEnumDescription())
             {
                 var data = _httpContextAccessor.HttpContext;
@@ -65,7 +98,7 @@ namespace OAuth20.Server.Services
             {
                 var client = _clientStore
                     .Clients
-                    .Where(x => 
+                    .Where(x =>
                     x.ClientId.Equals(clientId, StringComparison.OrdinalIgnoreCase))
                     .FirstOrDefault();
 
@@ -110,6 +143,24 @@ namespace OAuth20.Server.Services
                 return true;
 
             return false;
+        }
+
+        public AudienceValidator ValidateAudienceHandler(IEnumerable<string> audiences, SecurityToken securityToken,
+            TokenValidationParameters validationParameters, Client client, string token)
+        {
+            Func<IEnumerable<string>, SecurityToken, TokenValidationParameters, bool> handler = (audiences, securityToken, validationParameters) =>
+            {
+                // Check the Token the Back Store.
+                var tokenInDb = _dbContext.OAuthTokens.FirstOrDefault(x => x.Token == token);
+                if (tokenInDb == null)
+                    return false;
+
+                if (tokenInDb.Revoked)
+                    return false;
+
+                return true;
+            };
+            return new AudienceValidator(handler);
         }
     }
 }
