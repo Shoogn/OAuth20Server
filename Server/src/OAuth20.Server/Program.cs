@@ -62,6 +62,8 @@ builder.Services.AddScoped<ITokenIntrospectionService, TokenIntrospectionService
 builder.Services.TryAddScoped<ITokenRevocationValidation, TokenRevocationValidation>();
 builder.Services.TryAddScoped<ITokenIntrospectionValidation, TokenIntrospectionValidation>();
 builder.Services.AddScoped<IClientService, ClientService>();
+builder.Services.AddScoped<IUserInfoService, UserInfoService>();
+builder.Services.AddScoped<IBearerTokenUsageTypeValidation, BearerTokenUsageTypeValidation>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.Configure<RouteOptions>(options =>

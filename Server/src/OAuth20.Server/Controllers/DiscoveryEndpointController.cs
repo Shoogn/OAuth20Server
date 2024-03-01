@@ -28,7 +28,7 @@ namespace OAuth20.Server.Controllers
                 acr_values_supported = new string[] {"urn:mace:incommon:iap:silver", "urn:mace:incommon:iap:bronze"},
                 response_types_supported = new string[] { "code", "code id_token", "id_token", "token id_token" },
                 subject_types_supported = new string[] { "public", "pairwise" },
-
+                user_info_endpoint = "https://localhost:7275/UserInfo/GetUserInfo",
                 userinfo_encryption_enc_values_supported = new string[] { "A128CBC-HS256", "A128GCM" },
                 id_token_signing_alg_values_supported = new string[] { "RS256", "ES256", "HS256" , "SHA256" },
                 id_token_encryption_alg_values_supported = new string[] { "RSA1_5", "A128KW" },

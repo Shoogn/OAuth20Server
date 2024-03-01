@@ -1,4 +1,6 @@
-﻿namespace OAuth20.Server.OAuthResponse
+﻿using System.Text.Json.Serialization;
+
+namespace OAuth20.Server.OAuthResponse
 {
     public class UserInfoResponse 
     {
@@ -13,5 +15,17 @@
         /// Returned result as json.
         /// </summary>
         public string Claims { get; set; }
+
+        [JsonPropertyName("sub")]
+        public string Sub { get; set; }
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+
+        [JsonPropertyName("email")]
+        public string Email { get; set; }
+
+        [JsonPropertyName("email_verified")]
+        public bool EmailVerified { get; set; }
     }
 }

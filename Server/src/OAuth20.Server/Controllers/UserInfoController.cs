@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using OAuth20.Server.Services;
 using System.Threading.Tasks;
 
 namespace OAuth20.Server.Controllers
@@ -7,10 +8,16 @@ namespace OAuth20.Server.Controllers
     [ApiController]
     public class UserInfoController : ControllerBase
     {
-        [HttpGet, HttpPost]
-        public async Task<IActionResult> UserInfo()
+        private readonly IUserInfoService _userInfoService;
+        public UserInfoController(IUserInfoService userInfoService)
         {
-            return Ok();
+            _userInfoService = userInfoService;
+        }
+        [HttpGet, HttpPost]
+        public async Task<IActionResult> GetUserInfo()
+        {
+            var userInfo = await _userInfoService.GetUserInfoAsync();
+            return Ok(userInfo);
         }
     }
 }

@@ -7,16 +7,14 @@
  */
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using NuGet.Versioning;
 using OAuth20.Server.Configuration;
-using OAuth20.Server.OauthRequest;
 using OAuth20.Server.OAuthResponse;
 using OAuth20.Server.Services.Users;
 using OAuth20.Server.Validations;
 using System;
-using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
@@ -27,27 +25,30 @@ namespace OAuth20.Server.Services;
 
 public interface IUserInfoService
 {
-
+    Task<UserInfoResponse> GetUserInfoAsync();
 }
-public class UserInfoService
+public class UserInfoService : IUserInfoService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IBearerTokenUsageTypeValidation _bearerTokenUsageTypeValidation;
     private readonly OAuthServerOptions _optionsMonitor;
     private readonly IClientService _clientService;
     private readonly IUserManagerService _userManagerService;
+    private readonly ILogger<UserInfoService> _logger;
 
     public UserInfoService(IHttpContextAccessor httpContextAccessor,
          IBearerTokenUsageTypeValidation bearerTokenUsageTypeValidation,
          IOptionsMonitor<OAuthServerOptions> optionsMonitor,
          IClientService clientService,
-         IUserManagerService userManagerService)
+         IUserManagerService userManagerService,
+         ILogger<UserInfoService> logger)
     {
         _httpContextAccessor = httpContextAccessor;
         _bearerTokenUsageTypeValidation = bearerTokenUsageTypeValidation;
         _optionsMonitor = optionsMonitor.CurrentValue ?? new OAuthServerOptions();
         _clientService = clientService;
         _userManagerService = userManagerService;
+        _logger = logger;
     }
 
     public async Task<UserInfoResponse> GetUserInfoAsync()
@@ -113,6 +114,10 @@ public class UserInfoService
 
                     string scope = (tokenValidationReslt.Claims.FirstOrDefault(x => x.Key == "scope").Value).ToString();
 
+                    response.Sub = userId;
+                    response.EmailVerified = user.EmailConfirmed;
+                    response.Email = user.Email;
+                    response.Name = user.Email;
 
                     //response.Active = true;
                     //response.TokenType = "access_token";
@@ -126,6 +131,7 @@ public class UserInfoService
             }
             catch (Exception ex) // maybe SecurityTokenException
             {
+                _logger.LogCritical("There is an exception during fetching the user info, {exception}", ex);
                 response.Claims = null;
                 response.Succeeded = false;
                 response.Error = "invalid_token";
