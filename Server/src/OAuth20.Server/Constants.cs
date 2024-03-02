@@ -45,7 +45,7 @@
 
         public static class AuthenticatedRequestScheme
         {
-            public const string AuthorizationRequestHeader = "Beraer";
+            public const string AuthorizationRequestHeader = "Bearer";
             public const string FormEncodedBodyParameter = "access_token";
             public const string UriQueryParameter = "access_token";
         }

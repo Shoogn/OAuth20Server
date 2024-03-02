@@ -83,8 +83,8 @@ namespace OAuth20.Server.Services
 
 
             // check the return url is match the one that in the client store
-            bool redirectUriIsMatched = client.Client.RedirectUri.Equals(authorizationRequest.redirect_uri,StringComparison.OrdinalIgnoreCase);
-            if(!redirectUriIsMatched)
+            bool redirectUriIsMatched = client.Client.RedirectUri.Equals(authorizationRequest.redirect_uri, StringComparison.OrdinalIgnoreCase);
+            if (!redirectUriIsMatched)
             {
                 response.Error = ErrorTypeEnum.InvalidRequest.GetEnumDescription();
                 response.ErrorDescription = "redirect uri is not matched the one in the client store";
@@ -164,7 +164,7 @@ namespace OAuth20.Server.Services
                 }
                 IEnumerable<string> scopes = checkClientResult.Client.AllowedScopes.Intersect(tokenRequest.scope);
 
-                var clientCredentialAccessTokenResult = generateJWTTokne(scopes, Constants.TokenTypes.JWTAcceseccToken, checkClientResult.Client);
+                var clientCredentialAccessTokenResult = generateJWTTokne(scopes, Constants.TokenTypes.JWTAcceseccToken, checkClientResult.Client, null);
                 SaveJWTTokenInBackStore(checkClientResult.Client.ClientId, clientCredentialAccessTokenResult.AccessToken, clientCredentialAccessTokenResult.ExpirationDate);
 
                 result.access_token = clientCredentialAccessTokenResult.AccessToken;
@@ -200,6 +200,7 @@ namespace OAuth20.Server.Services
 
 
             string id_token = string.Empty;
+            string userId = null;
             if (clientCodeChecker.IsOpenId)
             {
                 if (!clientCodeChecker.Subject.Identity.IsAuthenticated)
@@ -208,7 +209,7 @@ namespace OAuth20.Server.Services
 
                 var currentUserName = clientCodeChecker.Subject.Identity.Name;
 
-                var userId = clientCodeChecker.Subject.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
+                userId = clientCodeChecker.Subject.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
 
                 if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(currentUserName))
                     return new TokenResponse { Error = ErrorTypeEnum.InvalidGrant.GetEnumDescription() };
@@ -226,10 +227,10 @@ namespace OAuth20.Server.Services
 
                 var claims = new List<Claim>()
                     {
-                        new Claim("sub", userId),
-                        new Claim("given_name", currentUserName),
+                        new Claim("sub", userId, ClaimValueTypes.String),
+                        new Claim("given_name", currentUserName, ClaimValueTypes.String),
                         new Claim("iat", iat.ToString(), ClaimValueTypes.Integer), // time stamp
-                        new Claim("nonce", clientCodeChecker.Nonce)
+                        new Claim("nonce", clientCodeChecker.Nonce, ClaimValueTypes.String)
                     };
                 foreach (var amr in amrs)
                     claims.Add(new Claim("amr", amr));// authentication
@@ -239,7 +240,6 @@ namespace OAuth20.Server.Services
                 var token = new JwtSecurityToken(_options.IDPUri, checkClientResult.Client.ClientId, claims,
                     expires: DateTime.UtcNow.AddMinutes(int.Parse("50")), signingCredentials: new
                     SigningCredentials(rsaSecurityKey, SecurityAlgorithms.RsaSha256));
-
                 id_token = handler.WriteToken(token);
 
                 var idptoken = new OAuthTokenEntity
@@ -263,7 +263,7 @@ namespace OAuth20.Server.Services
                                          where !OAuth2ServerHelpers.OpenIdConnectScopes.Contains(m)
                                          select m;
 
-            var accessTokenResult = generateJWTTokne(scopesinJWtAccessToken, Constants.TokenTypes.JWTAcceseccToken, checkClientResult.Client);
+            var accessTokenResult = generateJWTTokne(scopesinJWtAccessToken, Constants.TokenTypes.JWTAcceseccToken, checkClientResult.Client, userId);
             SaveJWTTokenInBackStore(checkClientResult.Client.ClientId, accessTokenResult.AccessToken, accessTokenResult.ExpirationDate);
 
             // here remove the code from the Concurrent Dictionary
@@ -314,19 +314,24 @@ namespace OAuth20.Server.Services
         }
 
 
-      
 
 
-        public TokenResult generateJWTTokne(IEnumerable<string> scopes, string tokenType, Client client)
+
+        public TokenResult generateJWTTokne(IEnumerable<string> scopes, string tokenType, Client client, string sub)
         {
             var result = new TokenResult();
 
             if (tokenType == Constants.TokenTypes.JWTAcceseccToken)
             {
-                var claims_at = new List<Claim>
+                var claims = new List<Claim>
                 {
                     new Claim("scope", string.Join(' ', scopes))
                 };
+
+                if (!string.IsNullOrEmpty(sub))
+                {
+                    claims.Add(new Claim("sub", sub, ClaimValueTypes.String));
+                }
 
                 RSACryptoServiceProvider provider1 = new RSACryptoServiceProvider();
 
@@ -336,7 +341,7 @@ namespace OAuth20.Server.Services
                 RsaSecurityKey rsaSecurityKey1 = new RsaSecurityKey(provider1);
                 JwtSecurityTokenHandler handler1 = new JwtSecurityTokenHandler();
 
-                var token1 = new JwtSecurityToken(_options.IDPUri, client.ClientUri, claims_at, notBefore: DateTime.UtcNow,
+                var token1 = new JwtSecurityToken(_options.IDPUri, client.ClientUri, claims, notBefore: DateTime.UtcNow,
                     expires: DateTime.UtcNow.AddMinutes(int.Parse("50")), signingCredentials: new
                     SigningCredentials(rsaSecurityKey1, SecurityAlgorithms.RsaSha256));
 

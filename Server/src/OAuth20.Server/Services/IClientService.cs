@@ -30,6 +30,8 @@ namespace OAuth20.Server.Services
         AudienceValidator ValidateAudienceHandler(IEnumerable<string> audiences, SecurityToken securityToken,
             TokenValidationParameters validationParameters, Client client, string token);
 
+        Task<CheckClientResult> GetClientByUriAsync(string clientUrl);
+
         Task<CheckClientResult> GetClientByIdAsync(string clientId);
     }
 
@@ -64,6 +66,18 @@ namespace OAuth20.Server.Services
             //{
             //   var c = _clientStore.Clients.Where(x => x.ClientId == clientId).FirstOrDefault();
             //}
+        }
+
+
+        public Task<CheckClientResult> GetClientByUriAsync(string clientUrl)
+        {
+            var c = _clientStore.Clients.Where(x => x.ClientUri == clientUrl).FirstOrDefault();
+            var response = new CheckClientResult
+            {
+                Client = c,
+                IsSuccess = true
+            };
+            return Task.FromResult(response);
         }
 
         public CheckClientResult VerifyClientById(string clientId, bool checkWithSecret = false, string clientSecret = null,

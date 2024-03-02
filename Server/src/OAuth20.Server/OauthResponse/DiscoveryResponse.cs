@@ -17,7 +17,7 @@ namespace OAuth20.Server.OauthResponse
         public string token_endpoint { get; set; }
         public IList<string> token_endpoint_auth_methods_supported { get; set; }
         public IList<string> token_endpoint_auth_signing_alg_values_supported { get; set; }
-        public string user_info_endpoint { get; set; }
+        public string userinfo_endpoint { get; set; }
         public string check_session_iframe { get; set; }
         public string end_session_endpoint { get; set; }
         public string jwks_uri { get; set; }

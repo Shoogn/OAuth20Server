@@ -18,6 +18,7 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 
@@ -75,8 +76,10 @@ public class UserInfoService : IUserInfoService
             JwtSecurityTokenHandler jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
             JwtSecurityToken jwtSecurityToken = jwtSecurityTokenHandler.ReadJwtToken(bearerTokenUsages.Token);
 
-            var clientId = jwtSecurityToken.Audiences.FirstOrDefault();
-            var client = await _clientService.GetClientByIdAsync(clientId);
+            var aud = jwtSecurityToken.Audiences.FirstOrDefault();
+            var client = await _clientService.GetClientByUriAsync(aud);
+            
+
 
             // TODO:
             // check if client is null.
@@ -100,8 +103,9 @@ public class UserInfoService : IUserInfoService
 
                 if (tokenValidationReslt.IsValid)
                 {
-                    string userId = tokenValidationReslt.ClaimsIdentity.FindFirst("sub")?.Value;
-
+                    var payload = jwtSecurityToken.Payload;
+                    //string userId = tokenValidationReslt.ClaimsIdentity.FindFirst("sub")?.Value;
+                    var userId = payload.Claims.FirstOrDefault(x => x.Type == "sub")?.Value;
                     // TODO:
                     // check userId is null
 
