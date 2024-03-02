@@ -21,7 +21,6 @@ namespace OAuth20.Server.OauthResponse
         /// required if it was present in the client authorization request
         /// </summary>
         public string State { get; set; }
-
         public string RedirectUri { get; set; }
         public IList<string> RequestedScopes { get; set; }
         public string GrantType { get; set; }

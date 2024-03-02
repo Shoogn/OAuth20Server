@@ -7,7 +7,7 @@
  */
 
 using OAuth20.Server.Common;
-using OAuth20.Server.Models;
+using OAuth20.Server.Enumeration;
 
 namespace OAuth20.Server.OauthResponse
 {

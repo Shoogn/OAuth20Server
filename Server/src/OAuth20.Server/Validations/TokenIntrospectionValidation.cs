@@ -8,7 +8,6 @@
 
 using Microsoft.AspNetCore.Http;
 using OAuth20.Server.Models;
-using OAuth20.Server.OauthResponse;
 using System.Linq;
 using System;
 using System.Threading.Tasks;
@@ -17,6 +16,7 @@ using System.Text;
 using OAuth20.Server.OauthRequest;
 using OAuth20.Server.Validations.Response;
 using System.Collections;
+using OAuth20.Server.Enumeration;
 
 namespace OAuth20.Server.Validations
 {

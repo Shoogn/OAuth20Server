@@ -6,13 +6,12 @@
  of this license document, but changing it is not allowed.
  */
 
-using System.ComponentModel;
+using OAuth20.Server.Validations.Response;
+using System.Threading.Tasks;
 
-namespace OAuth20.Server.Models
+namespace OAuth20.Server.Validations;
+
+public interface IBearerTokenUsageTypeValidation
 {
-    public enum TokenTypeEnum : byte
-    {
-        [Description("Bearer")]
-        Bearer
-    }
+    Task<BearerTokenUsageTypeValidationResponse> ValidateAsync();
 }

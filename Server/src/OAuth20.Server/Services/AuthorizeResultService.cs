@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OAuth20.Server.Common;
 using OAuth20.Server.Configuration;
+using OAuth20.Server.Enumeration;
 using OAuth20.Server.Models;
 using OAuth20.Server.Models.Context;
 using OAuth20.Server.Models.Entities;
@@ -31,18 +32,20 @@ namespace OAuth20.Server.Services
     public class AuthorizeResultService : IAuthorizeResultService
     {
         // for encrypted key see: https://stackoverflow.com/questions/18223868/how-to-encrypt-jwt-security-token
-        private readonly ClientStore _clientStore = new ClientStore();
         private readonly ICodeStoreService _codeStoreService;
+        private readonly IClientService _clientService;
         private readonly OAuthServerOptions _options;
         private readonly BaseDBContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         public AuthorizeResultService(ICodeStoreService codeStoreService,
+            IClientService clientService,
             IOptions<OAuthServerOptions> options,
             BaseDBContext context,
             IHttpContextAccessor httpContextAccessor)
         {
             _codeStoreService = codeStoreService;
+            _clientService = clientService;
             _options = options.Value;
             _context = context;
             _httpContextAccessor = httpContextAccessor;
@@ -57,7 +60,7 @@ namespace OAuth20.Server.Services
                 return response;
             }
 
-            var client = VerifyClientById(authorizationRequest.client_id);
+            var client = _clientService.VerifyClientById(authorizationRequest.client_id);
             if (!client.IsSuccess)
             {
                 response.Error = client.ErrorDescription;
@@ -67,21 +70,26 @@ namespace OAuth20.Server.Services
             if (string.IsNullOrEmpty(authorizationRequest.response_type) || authorizationRequest.response_type != "code")
             {
                 response.Error = ErrorTypeEnum.InvalidRequest.GetEnumDescription();
-                response.ErrorDescription = "response_type is required or is not valid";
+                response.ErrorDescription = "response type is required or is not valid";
                 return response;
             }
 
             if (!authorizationRequest.redirect_uri.IsRedirectUriStartWithHttps() && !httpContextAccessor.HttpContext.Request.IsHttps)
             {
                 response.Error = ErrorTypeEnum.InvalidRequest.GetEnumDescription();
-                response.ErrorDescription = "redirect_url is not secure, MUST be TLS";
+                response.ErrorDescription = "redirect url is not secure, MUST be TLS";
                 return response;
             }
 
 
             // check the return url is match the one that in the client store
-
-
+            bool redirectUriIsMatched = client.Client.RedirectUri.Equals(authorizationRequest.redirect_uri, StringComparison.OrdinalIgnoreCase);
+            if (!redirectUriIsMatched)
+            {
+                response.Error = ErrorTypeEnum.InvalidRequest.GetEnumDescription();
+                response.ErrorDescription = "redirect uri is not matched the one in the client store";
+                return response;
+            }
             // check the scope in the client store with the
             // one that is comming from the request MUST be matched at leaset one
 
@@ -132,76 +140,12 @@ namespace OAuth20.Server.Services
             return response;
         }
 
-        private CheckClientResult VerifyClientById(string clientId, bool checkWithSecret = false, string clientSecret = null, string grantType = null)
-        {
-            CheckClientResult result = new CheckClientResult() { IsSuccess = false };
-
-            if (!string.IsNullOrWhiteSpace(grantType) && grantType == AuthorizationGrantTypesEnum.ClientCredentials.GetEnumDescription())
-            {
-                var data = _httpContextAccessor.HttpContext;
-                var authHeader = data.Request.Headers["Authorization"].ToString();
-                if (authHeader == null)
-                    return result;
-                if (!authHeader.StartsWith("Basic", StringComparison.OrdinalIgnoreCase))
-                    return result;
-
-                var parameters = authHeader.Substring("Basic ".Length);
-                var authorizationKeys = Encoding.UTF8.GetString(Convert.FromBase64String(parameters));
-
-                var authorizationResult = authorizationKeys.IndexOf(':');
-                if (authorizationResult == -1)
-                    return result;
-                clientId = authorizationKeys.Substring(0, authorizationResult);
-                clientSecret = authorizationKeys.Substring(authorizationResult + 1);
-
-            }
-
-
-
-            if (!string.IsNullOrWhiteSpace(clientId))
-            {
-                var client = _clientStore.Clients.Where(x => x.ClientId.Equals(clientId, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
-
-                if (client != null)
-                {
-                    if (checkWithSecret && !string.IsNullOrEmpty(clientSecret))
-                    {
-                        bool hasSamesecretId = client.ClientSecret.Equals(clientSecret, StringComparison.InvariantCulture);
-                        if (!hasSamesecretId)
-                        {
-                            result.Error = ErrorTypeEnum.InvalidClient.GetEnumDescription();
-                            return result;
-                        }
-                    }
-                    // check if client is enabled or not
-
-                    if (client.IsActive)
-                    {
-                        result.IsSuccess = true;
-                        result.Client = client;
-
-                        return result;
-                    }
-                    else
-                    {
-                        result.ErrorDescription = ErrorTypeEnum.UnAuthoriazedClient.GetEnumDescription();
-                        return result;
-                    }
-                }
-            }
-
-            result.ErrorDescription = ErrorTypeEnum.AccessDenied.GetEnumDescription();
-            return result;
-        }
-
-
         public TokenResponse GenerateToken(TokenRequest tokenRequest)
         {
-
             var result = new TokenResponse();
-            var serchBySecret = searchForClientBySecret(tokenRequest.grant_type);
+            var serchBySecret = _clientService.SearchForClientBySecret(tokenRequest.grant_type);
 
-            var checkClientResult = this.VerifyClientById(tokenRequest.client_id, serchBySecret, tokenRequest.client_secret, tokenRequest.grant_type);
+            var checkClientResult = _clientService.VerifyClientById(tokenRequest.client_id, serchBySecret, tokenRequest.client_secret, tokenRequest.grant_type);
             if (!checkClientResult.IsSuccess)
             {
                 return new TokenResponse { Error = checkClientResult.Error, ErrorDescription = checkClientResult.ErrorDescription };
@@ -220,7 +164,7 @@ namespace OAuth20.Server.Services
                 }
                 IEnumerable<string> scopes = checkClientResult.Client.AllowedScopes.Intersect(tokenRequest.scope);
 
-                var clientCredentialAccessTokenResult = generateJWTTokne(scopes, Constants.TokenTypes.JWTAcceseccToken, checkClientResult.Client);
+                var clientCredentialAccessTokenResult = generateJWTTokne(scopes, Constants.TokenTypes.JWTAcceseccToken, checkClientResult.Client, null);
                 SaveJWTTokenInBackStore(checkClientResult.Client.ClientId, clientCredentialAccessTokenResult.AccessToken, clientCredentialAccessTokenResult.ExpirationDate);
 
                 result.access_token = clientCredentialAccessTokenResult.AccessToken;
@@ -256,6 +200,7 @@ namespace OAuth20.Server.Services
 
 
             string id_token = string.Empty;
+            string userId = null;
             if (clientCodeChecker.IsOpenId)
             {
                 if (!clientCodeChecker.Subject.Identity.IsAuthenticated)
@@ -264,7 +209,7 @@ namespace OAuth20.Server.Services
 
                 var currentUserName = clientCodeChecker.Subject.Identity.Name;
 
-                var userId = clientCodeChecker.Subject.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
+                userId = clientCodeChecker.Subject.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
 
                 if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(currentUserName))
                     return new TokenResponse { Error = ErrorTypeEnum.InvalidGrant.GetEnumDescription() };
@@ -282,10 +227,10 @@ namespace OAuth20.Server.Services
 
                 var claims = new List<Claim>()
                     {
-                        new Claim("sub", userId),
-                        new Claim("given_name", currentUserName),
+                        new Claim("sub", userId, ClaimValueTypes.String),
+                        new Claim("given_name", currentUserName, ClaimValueTypes.String),
                         new Claim("iat", iat.ToString(), ClaimValueTypes.Integer), // time stamp
-                        new Claim("nonce", clientCodeChecker.Nonce)
+                        new Claim("nonce", clientCodeChecker.Nonce, ClaimValueTypes.String)
                     };
                 foreach (var amr in amrs)
                     claims.Add(new Claim("amr", amr));// authentication
@@ -295,7 +240,6 @@ namespace OAuth20.Server.Services
                 var token = new JwtSecurityToken(_options.IDPUri, checkClientResult.Client.ClientId, claims,
                     expires: DateTime.UtcNow.AddMinutes(int.Parse("50")), signingCredentials: new
                     SigningCredentials(rsaSecurityKey, SecurityAlgorithms.RsaSha256));
-
                 id_token = handler.WriteToken(token);
 
                 var idptoken = new OAuthTokenEntity
@@ -319,7 +263,7 @@ namespace OAuth20.Server.Services
                                          where !OAuth2ServerHelpers.OpenIdConnectScopes.Contains(m)
                                          select m;
 
-            var accessTokenResult = generateJWTTokne(scopesinJWtAccessToken, Constants.TokenTypes.JWTAcceseccToken, checkClientResult.Client);
+            var accessTokenResult = generateJWTTokne(scopesinJWtAccessToken, Constants.TokenTypes.JWTAcceseccToken, checkClientResult.Client, userId);
             SaveJWTTokenInBackStore(checkClientResult.Client.ClientId, accessTokenResult.AccessToken, accessTokenResult.ExpirationDate);
 
             // here remove the code from the Concurrent Dictionary
@@ -354,7 +298,7 @@ namespace OAuth20.Server.Services
         {
             var odeVerifireAsByte = Encoding.ASCII.GetBytes(codeVerifier);
 
-            if (codeChallengeMethod == Constants.Plain)
+            if (codeChallengeMethod == Constants.ChallengeMethod.Plain)
             {
                 using var shaPalin = SHA256.Create();
                 var computedHashPalin = shaPalin.ComputeHash(odeVerifireAsByte);
@@ -370,27 +314,24 @@ namespace OAuth20.Server.Services
         }
 
 
-        private bool searchForClientBySecret(string grantType)
-        {
-            if (grantType == AuthorizationGrantTypesEnum.ClientCredentials.GetEnumDescription() ||
-                grantType == AuthorizationGrantTypesEnum.RefreshToken.GetEnumDescription() ||
-                grantType == AuthorizationGrantTypesEnum.ClientCredentials.GetEnumDescription())
-                return true;
-
-            return false;
-        }
 
 
-        public TokenResult generateJWTTokne(IEnumerable<string> scopes, string tokenType, Client client)
+
+        public TokenResult generateJWTTokne(IEnumerable<string> scopes, string tokenType, Client client, string sub)
         {
             var result = new TokenResult();
 
             if (tokenType == Constants.TokenTypes.JWTAcceseccToken)
             {
-                var claims_at = new List<Claim>
+                var claims = new List<Claim>
                 {
                     new Claim("scope", string.Join(' ', scopes))
                 };
+
+                if (!string.IsNullOrEmpty(sub))
+                {
+                    claims.Add(new Claim("sub", sub, ClaimValueTypes.String));
+                }
 
                 RSACryptoServiceProvider provider1 = new RSACryptoServiceProvider();
 
@@ -400,7 +341,7 @@ namespace OAuth20.Server.Services
                 RsaSecurityKey rsaSecurityKey1 = new RsaSecurityKey(provider1);
                 JwtSecurityTokenHandler handler1 = new JwtSecurityTokenHandler();
 
-                var token1 = new JwtSecurityToken(_options.IDPUri, client.ClientUri, claims_at, notBefore: DateTime.UtcNow,
+                var token1 = new JwtSecurityToken(_options.IDPUri, client.ClientUri, claims, notBefore: DateTime.UtcNow,
                     expires: DateTime.UtcNow.AddMinutes(int.Parse("50")), signingCredentials: new
                     SigningCredentials(rsaSecurityKey1, SecurityAlgorithms.RsaSha256));
 

@@ -61,18 +61,32 @@ builder.Services.AddScoped<ITokenRevocationService, TokenRevocationService>();
 builder.Services.AddScoped<ITokenIntrospectionService, TokenIntrospectionService>();
 builder.Services.TryAddScoped<ITokenRevocationValidation, TokenRevocationValidation>();
 builder.Services.TryAddScoped<ITokenIntrospectionValidation, TokenIntrospectionValidation>();
+builder.Services.AddScoped<IClientService, ClientService>();
+builder.Services.AddScoped<IUserInfoService, UserInfoService>();
+builder.Services.AddScoped<IBearerTokenUsageTypeValidation, BearerTokenUsageTypeValidation>();
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.Configure<RouteOptions>(options =>
+//builder.Services.Configure<RouteOptions>(options =>
+//{
+//    options.LowercaseQueryStrings = true;
+//    options.LowercaseUrls = true;
+//});
+
+builder.Services.AddCors(options =>
 {
-    options.LowercaseQueryStrings = true;
-    options.LowercaseUrls = true;
-});
+    options.AddPolicy("UserInfoPolicy", o =>
+    {
+        o.AllowAnyOrigin();
+        o.AllowAnyHeader();
+        o.AllowAnyMethod();
+    });
+}); 
 builder.Services.AddControllersWithViews();
 var app = builder.Build();
 
 app.UseStaticFiles();
 app.UseRouting();
+app.UseCors("UserInfoPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseEndpoints(endpoints =>
