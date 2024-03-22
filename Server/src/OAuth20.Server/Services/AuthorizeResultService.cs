@@ -81,6 +81,14 @@ namespace OAuth20.Server.Services
                 return response;
             }
 
+            if (client.Client.UsePkce && string.IsNullOrWhiteSpace(authorizationRequest.code_challenge))
+            {
+                response.Error = ErrorTypeEnum.InvalidRequest.GetEnumDescription();
+                response.ErrorDescription = "code challenge required";
+                return response;
+
+            }
+
 
             // check the return url is match the one that in the client store
             bool redirectUriIsMatched = client.Client.RedirectUri.Equals(authorizationRequest.redirect_uri, StringComparison.OrdinalIgnoreCase);
@@ -300,17 +308,23 @@ namespace OAuth20.Server.Services
 
             if (codeChallengeMethod == Constants.ChallengeMethod.Plain)
             {
-                using var shaPalin = SHA256.Create();
-                var computedHashPalin = shaPalin.ComputeHash(odeVerifireAsByte);
-                var tranformedResultPalin = Base64UrlEncoder.Encode(computedHashPalin);
-                return tranformedResultPalin.Equals(codeChallenge);
+                return codeVerifier.Equals(codeChallenge);
             }
 
-            using var shaS256 = SHA256.Create();
-            var computedHashS256 = shaS256.ComputeHash(odeVerifireAsByte);
-            var tranformedResultS256 = Base64UrlEncoder.Encode(computedHashS256);
+            else if (codeChallengeMethod == Constants.ChallengeMethod.SHA256)
+            {
 
-            return tranformedResultS256.Equals(codeChallenge);
+                using var shaS256 = SHA256.Create();
+                var computedHashS256 = shaS256.ComputeHash(odeVerifireAsByte);
+                var tranformedResultS256 = Base64UrlEncoder.Encode(computedHashS256);
+
+                return tranformedResultS256.Equals(codeChallenge);
+            }
+            else
+            {
+                return false;
+            }
+
         }
 
 
