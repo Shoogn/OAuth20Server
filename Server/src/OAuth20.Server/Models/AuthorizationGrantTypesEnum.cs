@@ -18,6 +18,9 @@ namespace OAuth20.Server.Models
 
         [Description("refresh_token")] RefreshToken,
 
-        [Description("authorization_code")] AuthorizationCode
+        [Description("authorization_code")] AuthorizationCode,
+
+        [Description("urn:ietf:params:oauth:grant-type:device_code")] DeviceCode
+           
     }
 }
