@@ -15,6 +15,7 @@
             public const string Email = "email";
             public const string Address = "address";
             public const string Phone = "phone";
+            public const string OfflineAccess = "offline_access";
         }
 
         public static class TokenTypes
