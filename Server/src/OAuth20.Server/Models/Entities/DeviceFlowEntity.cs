@@ -19,12 +19,12 @@ namespace OAuth20.Server.Models.Entities
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        [StringLength(50)]
+        [MaxLength(50)]
         
         public string UserCode { get; set; }
 
         [Required]
-        [StringLength(50)]
+        [MaxLength(50)]
        
         public string DeviceCode { get; set; }
 
@@ -32,10 +32,16 @@ namespace OAuth20.Server.Models.Entities
         public DateTime ExpireIn { get; set; }
 
         [Required]
-        [StringLength(100)]
+        [MaxLength(100)]
         public string ClientId { get; set; }
 
         [Required]
         public DateTime CreatedDate { get; set; }
+
+        [Required]
+        [MaxLength(150)]
+        public string SessionId { get; set; }
+
+        public bool? UserInterActionComplete { get; set; }
     }
 }

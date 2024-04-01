@@ -20,5 +20,6 @@ namespace OAuth20.Server.Models.Context
         }
         public DbSet<OAuthApplicationEntity> OAuthApplications { get; set; }
         public DbSet<OAuthTokenEntity> OAuthTokens { get; set; }
+        public DbSet<DeviceFlowEntity> DeviceFlows { get; set; }
     }
 }

@@ -62,6 +62,15 @@ namespace OAuth20.Server.Models
                 GrantTypes = GrantTypes.ClientCredentials,
                 IsActive = true,
                 ClientUri = "https://localhost:7065",
+            },
+              new Client
+            {
+                ClientName = "consoledeviceapp",
+                ClientId = "4",
+                ClientSecret = "123456789",
+                AllowedScopes = new[]{ "consoledeviceapp.read", "consoledeviceapp.wite", "consoledeviceapp.readandwrite" },
+                GrantTypes = GrantTypes.DeviceCode,
+                IsActive = true,
             }
         };
     }
