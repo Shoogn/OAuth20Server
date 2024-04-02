@@ -14,7 +14,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 
-namespace OAuth20.Server.Services.CodeServce
+namespace OAuth20.Server.Services.CodeService
 {
     public class CodeStoreService : ICodeStoreService
     {

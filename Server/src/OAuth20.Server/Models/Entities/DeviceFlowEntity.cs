@@ -43,5 +43,7 @@ namespace OAuth20.Server.Models.Entities
         public string SessionId { get; set; }
 
         public bool? UserInterActionComplete { get; set; }
+
+        public string RequestedScope { get; set; }
     }
 }

@@ -23,6 +23,9 @@ namespace OAuth20.Server.OAuthResponse
         [JsonPropertyName("verification_uri_complete")]
         public string VerificationUriComplete { get; set; }
 
+        /// <summary>
+        /// Get or set the lifetime in seconds of the <see cref="DeviceCode"/> and <see cref="UserCode"/>.
+        /// </summary>
         [JsonPropertyName("expires_in")]
         public int ExpiresIn { get; set; }
 

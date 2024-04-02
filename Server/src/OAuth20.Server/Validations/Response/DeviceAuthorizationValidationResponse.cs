@@ -7,6 +7,7 @@
  */
 
 using OAuth20.Server.Models;
+using System.Collections.Generic;
 
 namespace OAuth20.Server.Validations.Response
 {
@@ -16,5 +17,6 @@ namespace OAuth20.Server.Validations.Response
         /// Get ot set the client.
         /// </summary>
         public Client Client { get; set; }
+        public string RequestedScope { get; set; }
     }
 }

@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProtectedResourceApp_JwtBea
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OAuth20.Server", "Server\src\OAuth20.Server\OAuth20.Server.csproj", "{9650FBCA-54A6-4B1E-AA32-22D82C444DC2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Deviceflow_ConsoleApp", "Sample\Deviceflow_ConsoleApp\Deviceflow_ConsoleApp.csproj", "{71718D81-3110-4576-9D16-D9DFD07127E1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{9650FBCA-54A6-4B1E-AA32-22D82C444DC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9650FBCA-54A6-4B1E-AA32-22D82C444DC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9650FBCA-54A6-4B1E-AA32-22D82C444DC2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{71718D81-3110-4576-9D16-D9DFD07127E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71718D81-3110-4576-9D16-D9DFD07127E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71718D81-3110-4576-9D16-D9DFD07127E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71718D81-3110-4576-9D16-D9DFD07127E1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -42,6 +48,7 @@ Global
 		{6A2C0C72-021B-4CB0-9EC0-D9169EE4F076} = {F6D9EFD5-E13B-4339-B29F-B3F077FEC21F}
 		{E7E57FF9-355C-452C-AC2F-B41A2E727235} = {F6D9EFD5-E13B-4339-B29F-B3F077FEC21F}
 		{9650FBCA-54A6-4B1E-AA32-22D82C444DC2} = {634F7193-1EB7-4E4E-A91E-44F544125BBD}
+		{71718D81-3110-4576-9D16-D9DFD07127E1} = {F6D9EFD5-E13B-4339-B29F-B3F077FEC21F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7D43B27E-F863-4832-9539-CCBFBB619BB6}

@@ -17,7 +17,7 @@ using OAuth20.Server.Configuration;
 using OAuth20.Server.Models.Context;
 using OAuth20.Server.Models.Entities;
 using OAuth20.Server.Services;
-using OAuth20.Server.Services.CodeServce;
+using OAuth20.Server.Services.CodeService;
 using OAuth20.Server.Services.Users;
 using OAuth20.Server.Validations;
 using System;
@@ -83,7 +83,8 @@ builder.Services.AddCors(options =>
         o.AllowAnyHeader();
         o.AllowAnyMethod();
     });
-}); 
+});
+builder.Services.AddSession();
 builder.Services.AddControllersWithViews();
 var app = builder.Build();
 
@@ -92,6 +93,7 @@ app.UseRouting();
 app.UseCors("UserInfoPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseSession();
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapDefaultControllerRoute();

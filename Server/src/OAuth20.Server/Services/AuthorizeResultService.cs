@@ -17,7 +17,7 @@ using OAuth20.Server.Models.Context;
 using OAuth20.Server.Models.Entities;
 using OAuth20.Server.OauthRequest;
 using OAuth20.Server.OauthResponse;
-using OAuth20.Server.Services.CodeServce;
+using OAuth20.Server.Services.CodeService;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;

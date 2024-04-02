@@ -27,5 +27,11 @@ namespace OAuth20.Server.Configuration
         /// </summary>
         public string IDPUri { get; set; }
 
+        /// <summary>
+        /// Get or set the device flow interval value in seconds to let client wait before
+        /// calling the Token endpoint repeatedly. <c>Default value is 5 seconds</c>
+        /// </summary>
+        public int DeviceFlowInterval { get; set; } = 5;
+
     }
 }
