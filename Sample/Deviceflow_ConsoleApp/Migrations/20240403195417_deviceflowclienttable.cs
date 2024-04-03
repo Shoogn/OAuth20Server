@@ -8,15 +8,11 @@ namespace Deviceflow_ConsoleApp.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.EnsureSchema(
-                name: "oauthclient");
-
             migrationBuilder.CreateTable(
                 name: "DeviceFlowClients",
-                schema: "oauthclient",
                 columns: table => new
                 {
-                    DeviceCode = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false)
+                    DeviceCode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -25,7 +21,6 @@ namespace Deviceflow_ConsoleApp.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_DeviceFlowClients_DeviceCode",
-                schema: "oauthclient",
                 table: "DeviceFlowClients",
                 column: "DeviceCode",
                 unique: true);
@@ -34,8 +29,7 @@ namespace Deviceflow_ConsoleApp.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "DeviceFlowClients",
-                schema: "oauthclient");
+                name: "DeviceFlowClients");
         }
     }
 }

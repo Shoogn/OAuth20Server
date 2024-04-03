@@ -20,7 +20,7 @@ IHost host = Host.CreateDefaultBuilder(args)
     {
         services.AddDbContext<DataContext>(options =>
         {
-            options.UseSqlite(hostBuilder.Configuration.GetConnectionString("DeviceFlowClientConnection"));
+            options.UseSqlServer(hostBuilder.Configuration.GetConnectionString("DeviceFlowClientConnection"));
         });
 
         services.AddScoped<DeviceflowEndpoint>();
