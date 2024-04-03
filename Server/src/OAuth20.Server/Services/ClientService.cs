@@ -17,24 +17,9 @@ using OAuth20.Server.Models.Context;
 using Microsoft.IdentityModel.Tokens;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 
 namespace OAuth20.Server.Services
 {
-    public interface IClientService
-    {
-        CheckClientResult VerifyClientById(string clientId, bool checkWithSecret = false, string clientSecret = null,
-            string grantType = null);
-
-        bool SearchForClientBySecret(string grantType);
-        AudienceValidator ValidateAudienceHandler(IEnumerable<string> audiences, SecurityToken securityToken,
-            TokenValidationParameters validationParameters, Client client, string token);
-
-        Task<CheckClientResult> GetClientByUriAsync(string clientUrl);
-
-        Task<CheckClientResult> GetClientByIdAsync(string clientId);
-    }
-
     public class ClientService : IClientService
     {
         private readonly ClientStore _clientStore = new ClientStore();

@@ -4,17 +4,18 @@
     {
         public static class ChallengeMethod
         {
-            public static string Plain = "plain";
-            public static string SHA256 = "S256";
+            public const string Plain = "plain";
+            public const string SHA256 = "S256";
         }
 
         public static class OpenIdConnectScopes
         {
-            public static string OpenId = "openid";
-            public static string Profile = "profile";
-            public static string Email = "email";
-            public static string Address = "address";
-            public static string Phone = "phone";
+            public const string OpenId = "openid";
+            public const string Profile = "profile";
+            public const string Email = "email";
+            public const string Address = "address";
+            public const string Phone = "phone";
+            public const string OfflineAccess = "offline_access";
         }
 
         public static class TokenTypes

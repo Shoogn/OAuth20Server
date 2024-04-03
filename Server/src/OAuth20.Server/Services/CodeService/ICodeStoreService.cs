@@ -10,7 +10,7 @@ using OAuth20.Server.Models;
 using System.Collections.Generic;
 using System.Security.Claims;
 
-namespace OAuth20.Server.Services.CodeServce
+namespace OAuth20.Server.Services.CodeService
 {
     public interface ICodeStoreService
     {
