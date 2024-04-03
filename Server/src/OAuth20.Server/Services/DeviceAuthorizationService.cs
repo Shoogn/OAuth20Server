@@ -67,6 +67,7 @@ public class DeviceAuthorizationService : IDeviceAuthorizationService
             UserInterActionComplete = false,
             SessionId = httpContext.Session.Id,
             RequestedScope = validationResult.RequestedScope != null ? validationResult.RequestedScope : default,
+            
         };
 
         _dbContext.Add(deviceflowEntity);
