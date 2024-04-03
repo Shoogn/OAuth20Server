@@ -24,7 +24,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         });
 
         services.AddScoped<DeviceflowEndpoint>();
-       // services.AddHostedService<Worker>();
+        services.AddHostedService<Worker>();
     }).Build();
 
 var logger = host.Services.GetRequiredService<ILogger<Program>>();

@@ -1,0 +1,35 @@
+﻿@model OAuth20.Server.OAuthRequest.UserInteractionRequest
+@{
+    ViewData["Title"] = "Device";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1>Device</h1>
+
+<div class="container" style="margin-top:30px;margin-bottom:130px">
+    <div class="row justify-content-md-center" style="margin-top:130px;">
+        <div class="col-md-5">
+            <div class="card">
+                <h5 class="card-header bg-dark text-white">Device</h5>
+                <div class="card-body">
+
+                    <form class="px-4 py-3" asp-action="Device" asp-controller="DeviceAuthorizationEndpoint" method="post">
+                        <div class="form-group">
+                            <label for="exampleDropdownFormEmail1">User Code</label>
+                            <input type="text" asp-for="UserCode" class="form-control" id="exampleDropdownFormEmail1" placeholder="enter the user code here">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Accept</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
+
+
+
+</div>
+

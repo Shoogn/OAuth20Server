@@ -18,6 +18,7 @@ using OAuth20.Server.Configuration;
 using Microsoft.Extensions.Options;
 using OAuth20.Server.Models.Context;
 using OAuth20.Server.Models.Entities;
+using System.Diagnostics.Contracts;
 
 namespace OAuth20.Server.Services;
 
@@ -37,6 +38,33 @@ public class DeviceAuthorizationService : IDeviceAuthorizationService
         _dbContext = dBContext;
     }
 
+    public async Task<bool> DeviceFlowUserInteractionAsync(string userCode)
+    {
+        if (string.IsNullOrWhiteSpace(userCode))
+            return false;
+
+        var data = await _dbContext.DeviceFlows.FindAsync(userCode);
+        if (data != null)
+        {
+            if (data.ExpireIn > DateTime.Now)
+            {
+                data.UserInterActionComplete = true;
+                _dbContext.Update(data);
+                var result = await _dbContext.SaveChangesAsync();
+                if (result > 0)
+                {
+                    return true;
+                }
+                return false;
+            }
+            return false;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     public async Task<DeviceAuthorizationResponse> GenerateDeviceAuthorizationCodeAsync(HttpContext httpContext)
     {
         var validationResult = await _validation.ValidateAsync(httpContext);
@@ -51,9 +79,9 @@ public class DeviceAuthorizationService : IDeviceAuthorizationService
             UserCode = GenerateUserCode(),
             DeviceCode = GenerateDeviceCode(),
             VerificationUri = _options.IDPUri + "/device",
-            ExpiresIn = 60,
+            ExpiresIn = 300, // user code and device code are valid for 5 minutes.
             Interval = _options.DeviceFlowInterval,
-            
+
         };
 
         // Store the responst in the back store (sql server in my case)
@@ -67,7 +95,7 @@ public class DeviceAuthorizationService : IDeviceAuthorizationService
             UserInterActionComplete = false,
             SessionId = httpContext.Session.Id,
             RequestedScope = validationResult.RequestedScope != null ? validationResult.RequestedScope : default,
-            
+
         };
 
         _dbContext.Add(deviceflowEntity);

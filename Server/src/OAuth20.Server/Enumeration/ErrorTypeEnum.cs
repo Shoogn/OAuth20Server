@@ -36,6 +36,9 @@ namespace OAuth20.Server.Enumeration
         InvalidGrant,
 
         [Description("invalid_client")]
-        InvalidClient
+        InvalidClient,
+
+        [Description("wait_for_user_interaction")]
+        WaitForUserInteraction
     }
 }

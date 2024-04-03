@@ -150,6 +150,8 @@ namespace OAuth20.Server.Services
 
         public TokenResponse GenerateToken(TokenRequest tokenRequest)
         {
+            // TODO: this method needs a refactor, and need to call generate token validation method  
+
             var result = new TokenResponse();
             var serchBySecret = _clientService.SearchForClientBySecret(tokenRequest.grant_type);
 
@@ -158,6 +160,54 @@ namespace OAuth20.Server.Services
             {
                 return new TokenResponse { Error = checkClientResult.Error, ErrorDescription = checkClientResult.ErrorDescription };
             }
+
+            // Check first if the authorization_grant is DeviceCode...
+            // then generate the jwt access token and store it to back store
+            if (tokenRequest.grant_type == AuthorizationGrantTypesEnum.DeviceCode.GetEnumDescription())
+            {
+                var clientHasDeviceCodeGrant = checkClientResult.Client.GrantTypes.Contains(tokenRequest.grant_type);
+                if (!clientHasDeviceCodeGrant)
+                {
+                    result.Error = ErrorTypeEnum.InvalidGrant.GetEnumDescription();
+                    return result;
+                }
+
+                var deviceCode = _context.DeviceFlows.Where(x => x.DeviceCode == tokenRequest.device_code &&
+                     x.ClientId == tokenRequest.client_id).SingleOrDefault();
+
+                if (deviceCode == null)
+                {
+                    result.Error = ErrorTypeEnum.InvalidRequest.GetEnumDescription();
+                    result.ErrorDescription = "Please check the device code";
+                    return result;
+                }
+
+                if (deviceCode.UserInterActionComplete == false)
+                {
+                    result.Error = ErrorTypeEnum.WaitForUserInteraction.GetEnumDescription();
+                    return result;
+                }
+
+
+                if (deviceCode.ExpireIn < DateTime.Now)
+                {
+                    result.Error = ErrorTypeEnum.InvalidRequest.GetEnumDescription();
+                    result.ErrorDescription = "The device code is expired";
+                    return result;
+                }
+
+                var requestedScope = deviceCode.RequestedScope.Split(' ');
+                IEnumerable<string> scopes = checkClientResult.Client.AllowedScopes.Intersect(requestedScope);
+
+
+                var deviceflowAccessTokenResult = generateJWTTokne(scopes, Constants.TokenTypes.JWTAcceseccToken, checkClientResult.Client, null);
+                SaveJWTTokenInBackStore(checkClientResult.Client.ClientId, deviceflowAccessTokenResult.AccessToken, deviceflowAccessTokenResult.ExpirationDate);
+
+                result.access_token = deviceflowAccessTokenResult.AccessToken;
+                result.id_token = null;
+                return result;
+            }
+
 
             // Check first if the authorization_grant is client_credentials...
             // then generate the jwt access token and store it to back store

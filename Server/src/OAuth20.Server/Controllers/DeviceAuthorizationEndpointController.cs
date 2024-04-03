@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using OAuth20.Server.OAuthRequest;
 using OAuth20.Server.Services;
 using System.Threading.Tasks;
 
@@ -26,6 +27,22 @@ namespace OAuth20.Server.Controllers
             if (result != null)
                 return Json(result);
             return Json("invalid client");
+        }
+
+        [HttpGet("~/device")]
+        public IActionResult Device()
+        {
+            return View();
+        }
+
+        [HttpPost("~/device")]
+        public async Task<IActionResult> Device(UserInteractionRequest userInteractionRequest)
+        {
+            var result = await _deviceAuthorizationService.DeviceFlowUserInteractionAsync(userInteractionRequest.UserCode);
+            if (result == true)
+                return RedirectToAction("Index", "Home");
+            else
+                return View(userInteractionRequest);
         }
     }
 }
