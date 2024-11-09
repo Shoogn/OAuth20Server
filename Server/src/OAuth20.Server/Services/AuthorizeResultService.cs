@@ -89,16 +89,18 @@ namespace OAuth20.Server.Services
                 return response;
 
             }
-
-
             // check the return url is match the one that in the client store
-            bool redirectUriIsMatched = client.Client.RedirectUri.Equals(authorizationRequest.redirect_uri, StringComparison.OrdinalIgnoreCase);
-            if (!redirectUriIsMatched)
+
+            var uri = client.Client.RedirectUris
+                .Where(x => x.Contains(authorizationRequest.redirect_uri, StringComparison.OrdinalIgnoreCase))
+                .FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(uri))
             {
                 response.Error = ErrorTypeEnum.InvalidRequest.GetEnumDescription();
                 response.ErrorDescription = "redirect uri is not matched the one in the client store";
                 return response;
             }
+
             // check the scope in the client store with the
             // one that is comming from the request MUST be matched at leaset one
 
@@ -141,7 +143,14 @@ namespace OAuth20.Server.Services
                 return response;
             }
 
-            response.RedirectUri = client.Client.RedirectUri + "?response_type=code" + "&state=" + authorizationRequest.state;
+            Dictionary<string, string> qs = new Dictionary<string, string>
+            {
+                { "response_type", "code" },
+                { "state", authorizationRequest.state }
+            };
+
+
+            response.RedirectUri = uri + QueryString.Create(qs);
             response.Code = code;
             response.State = authorizationRequest.state;
             response.RequestedScopes = clientScopes.ToList();
