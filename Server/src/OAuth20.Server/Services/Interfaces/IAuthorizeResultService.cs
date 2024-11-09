@@ -9,12 +9,13 @@
 using Microsoft.AspNetCore.Http;
 using OAuth20.Server.OauthRequest;
 using OAuth20.Server.OauthResponse;
+using System.Threading.Tasks;
 
 namespace OAuth20.Server.Services
 {
     public interface IAuthorizeResultService
     {
-        AuthorizeResponse AuthorizeRequest(IHttpContextAccessor httpContextAccessor, AuthorizationRequest authorizationRequest);
-        TokenResponse GenerateToken(TokenRequest tokenRequest);
+        Task<AuthorizeResponse> AuthorizeRequestAsync(IHttpContextAccessor httpContextAccessor, AuthorizationRequest authorizationRequest);
+        Task<TokenResponse> GenerateTokenAsync(TokenRequest tokenRequest);
     }
 }

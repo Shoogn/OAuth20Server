@@ -9,14 +9,16 @@
 using OAuth20.Server.Models;
 using System.Collections.Generic;
 using System.Security.Claims;
+using System.Threading.Tasks;
+
 
 namespace OAuth20.Server.Services.CodeService
 {
     public interface ICodeStoreService
     {
-        string GenerateAuthorizationCode(AuthorizationCode authorizationCode);
-        AuthorizationCode GetClientDataByCode(string key);
-        AuthorizationCode UpdatedClientDataByCode(string key, ClaimsPrincipal claimsPrincipal, IList<string> requestdScopes);
-        AuthorizationCode RemoveClientDataByCode(string key);
+        Task<string> GenerateAuthorizationCodeAsync(AuthorizationCode authorizationCode);
+        Task<AuthorizationCode> GetClientDataByCodeAsync(string key);
+        Task<AuthorizationCode> UpdatedClientDataByCodeAsync(string key, ClaimsPrincipal claimsPrincipal, IList<string> requestdScopes);
+        Task RemoveClientDataByCodeAsync(string key);
     }
 }

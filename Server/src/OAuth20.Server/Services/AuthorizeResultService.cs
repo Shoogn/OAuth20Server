@@ -26,6 +26,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace OAuth20.Server.Services
 {
@@ -50,7 +51,7 @@ namespace OAuth20.Server.Services
             _context = context;
             _httpContextAccessor = httpContextAccessor;
         }
-        public AuthorizeResponse AuthorizeRequest(IHttpContextAccessor httpContextAccessor, AuthorizationRequest authorizationRequest)
+        public async Task<AuthorizeResponse> AuthorizeRequestAsync(IHttpContextAccessor httpContextAccessor, AuthorizationRequest authorizationRequest)
         {
             AuthorizeResponse response = new AuthorizeResponse();
 
@@ -133,7 +134,7 @@ namespace OAuth20.Server.Services
 
             };
 
-            string code = _codeStoreService.GenerateAuthorizationCode(authoCode);
+            string code = await _codeStoreService.GenerateAuthorizationCodeAsync(authoCode);
             if (code == null)
             {
                 response.Error = ErrorTypeEnum.TemporarilyUnAvailable.GetEnumDescription();
@@ -148,10 +149,9 @@ namespace OAuth20.Server.Services
             return response;
         }
 
-        public TokenResponse GenerateToken(TokenRequest tokenRequest)
+        // TODO: this method needs a refactor, and need to call generate token validation method  
+        public async Task<TokenResponse> GenerateTokenAsync(TokenRequest tokenRequest)
         {
-            // TODO: this method needs a refactor, and need to call generate token validation method  
-
             var result = new TokenResponse();
             var serchBySecret = _clientService.SearchForClientBySecret(tokenRequest.grant_type);
 
@@ -233,7 +233,7 @@ namespace OAuth20.Server.Services
 
 
             // check code from the Concurrent Dictionary
-            var clientCodeChecker = _codeStoreService.GetClientDataByCode(tokenRequest.code);
+            var clientCodeChecker = await _codeStoreService.GetClientDataByCodeAsync(tokenRequest.code);
             if (clientCodeChecker == null)
                 return new TokenResponse { Error = ErrorTypeEnum.InvalidGrant.GetEnumDescription() };
 
@@ -325,7 +325,7 @@ namespace OAuth20.Server.Services
             SaveJWTTokenInBackStore(checkClientResult.Client.ClientId, accessTokenResult.AccessToken, accessTokenResult.ExpirationDate);
 
             // here remove the code from the Concurrent Dictionary
-            _codeStoreService.RemoveClientDataByCode(tokenRequest.code);
+            await _codeStoreService.RemoveClientDataByCodeAsync(tokenRequest.code);
 
             result.access_token = accessTokenResult.AccessToken;
             result.id_token = id_token;
