@@ -43,16 +43,16 @@ namespace OAuth20.Server.Controllers
             return View();
         }
 
-        public IActionResult Authorize(AuthorizationRequest authorizationRequest)
+        public async Task<IActionResult> Authorize(AuthorizationRequest authorizationRequest)
         {
-            var result = _authorizeResultService.AuthorizeRequest(_httpContextAccessor, authorizationRequest);
+            var result = await _authorizeResultService.AuthorizeRequestAsync(_httpContextAccessor, authorizationRequest);
 
             if (result.HasError)
                 return RedirectToAction("Error", new { error = result.Error });
 
             if (_httpContextAccessor.HttpContext.User.Identity.IsAuthenticated)
             {
-                var updateCodeResult = _codeStoreService.UpdatedClientDataByCode(result.Code, 
+                var updateCodeResult = await _codeStoreService.UpdatedClientDataByCodeAsync(result.Code, 
                     _httpContextAccessor.HttpContext.User, result.RequestedScopes);
                 if (updateCodeResult != null)
                 {
@@ -96,7 +96,7 @@ namespace OAuth20.Server.Controllers
             if (userLoginResult.Succeeded)
             {
                 var claimsPrincipals = await _userClaimsPrincipalFactory.CreateAsync(userLoginResult.AppUser);
-                var result = _codeStoreService.UpdatedClientDataByCode(loginRequest.Code,
+                var result = await _codeStoreService.UpdatedClientDataByCodeAsync(loginRequest.Code,
                     claimsPrincipals, loginRequest.RequestedScopes);
                 if (result != null)
                 {
@@ -109,9 +109,9 @@ namespace OAuth20.Server.Controllers
         }
 
         [HttpPost]
-        public JsonResult Token(TokenRequest tokenRequest)
+        public async Task<JsonResult> Token(TokenRequest tokenRequest)
         {
-            var result = _authorizeResultService.GenerateToken(tokenRequest);
+            var result = await _authorizeResultService.GenerateTokenAsync(tokenRequest);
 
             if (result.HasError)
                 return Json(new

@@ -12,7 +12,7 @@ namespace Deviceflow_ConsoleApp.Migrations
 {
     [DbContext(typeof(DataContext))]
     [Migration("20240403195417_deviceflowclienttable")]
-    partial class deviceflowclienttable
+    partial class Deviceflowclienttable
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

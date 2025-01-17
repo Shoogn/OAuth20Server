@@ -4,7 +4,7 @@
 
 namespace Deviceflow_ConsoleApp.Migrations
 {
-    public partial class deviceflowclienttable : Migration
+    public partial class Deviceflowclienttable : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {

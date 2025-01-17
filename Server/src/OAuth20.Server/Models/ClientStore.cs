@@ -37,7 +37,7 @@ namespace OAuth20.Server.Models
                 GrantTypes = GrantTypes.Code,
                 IsActive = false,
                 ClientUri = "https://localhost:7026",
-                RedirectUri = "https://localhost:7026/signin-oidc",
+                RedirectUris = new[] { "https://localhost:7026/signin-oidc" },
                 UsePkce = true,
             },
             new Client
@@ -49,7 +49,7 @@ namespace OAuth20.Server.Models
                 GrantTypes = GrantTypes.CodeAndClientCredentials,
                 IsActive = true,
                 ClientUri = "https://localhost:7276",
-                RedirectUri = "https://localhost:7276/signin-oidc",
+                RedirectUris = new[] {"https://localhost:7276/signin-oidc" },
                 UsePkce = true,
                // AllowedProtectedResources = new[]{ "jwtapitestapp" },
             },

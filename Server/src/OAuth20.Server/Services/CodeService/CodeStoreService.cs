@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 
 namespace OAuth20.Server.Services.CodeService
 {
@@ -24,7 +25,7 @@ namespace OAuth20.Server.Services.CodeService
         // Here I genrate the code for authorization, and I will store it 
         // in the Concurrent Dictionary
 
-        public string GenerateAuthorizationCode(AuthorizationCode authorizationCode)
+        public Task<string> GenerateAuthorizationCodeAsync(AuthorizationCode authorizationCode)
         {
             var client = _clientStore.Clients.Where(x => x.ClientId == authorizationCode.ClientId).SingleOrDefault();
 
@@ -37,28 +38,28 @@ namespace OAuth20.Server.Services.CodeService
 
                 _codeIssued[code] = authorizationCode;
 
-                return code;
+                return Task.FromResult(code);
             }
-            return null;
+            return Task.FromResult<string>(null);
         }
 
-        public AuthorizationCode GetClientDataByCode(string key)
+        public Task<AuthorizationCode> GetClientDataByCodeAsync(string key)
         {
             AuthorizationCode authorizationCode;
             if (_codeIssued.TryGetValue(key, out authorizationCode))
             {
-                return authorizationCode;
+                return Task.FromResult(authorizationCode);
             }
-            return null;
+            return Task.FromResult<AuthorizationCode>(null);
         }
 
         // TODO
         // Before updated the Concurrent Dictionary I have to Process User Sign In,
         // and check the user credienail first
         // But here I merge this process here inside update Concurrent Dictionary method
-        public AuthorizationCode UpdatedClientDataByCode(string key, ClaimsPrincipal claimsPrincipal, IList<string> requestdScopes)
+        public async Task<AuthorizationCode> UpdatedClientDataByCodeAsync(string key, ClaimsPrincipal claimsPrincipal, IList<string> requestdScopes)
         {
-            var oldValue = GetClientDataByCode(key);
+            var oldValue = await GetClientDataByCodeAsync(key);
 
             if (oldValue != null)
             {
@@ -90,19 +91,16 @@ namespace OAuth20.Server.Services.CodeService
 
                     if (result)
                         return newValue;
-                    return null;
+                    return await Task.FromResult<AuthorizationCode>(null);
                 }
             }
-            return null;
+            return await Task.FromResult<AuthorizationCode>(null);
         }
 
-        public AuthorizationCode RemoveClientDataByCode(string key)
+        public Task RemoveClientDataByCodeAsync(string key)
         {
-            AuthorizationCode authorizationCode;
-            var isRemoved = _codeIssued.TryRemove(key, out authorizationCode);
-            if (isRemoved)
-                return authorizationCode;
-            return null;
+            var isRemoved = _codeIssued.TryRemove(key, out _);
+            return Task.FromResult<object>(null);
         }
     }
 }
