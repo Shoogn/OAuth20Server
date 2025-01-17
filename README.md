@@ -5,44 +5,46 @@ If you want to create this project from scratch please read my step by step expl
 
 ---
 ### Get Started
-This OAuth server target .NET 6, so clone the project or download it. After that open the downloaded project with your prefere IDE (ex: Visual Studio).
+This OAuth server target the latest .NET version (.NET 9) or any older version, so from here clone the project or download it. After that open the project with your prefere IDE (ex: Visual Studio or Visual Studio Code).
 In the solution there is a folder named **Models**, inside this folder there is a class named **ClientStore.cs** this class accept a list of Clients and Clients here
-means your applications, or the applications that you would like to intracted with OAuth2 and OpenId Connect protocols.
+means your applications, or the applications that you would like to register to intracte with OAuth2.0 server.
 
 Here is the signature of the **Client** object ( you can find it in the Models folder )
 ```C#
     public class Client
     {
-        public Client()
-        {
+        public Client(){ }
 
-        }
+    public string ClientName { get; set; }
+    public string ClientId { get; set; }
 
-        public string ClientName { get; set; }
-        public string ClientId { get; set; }
+    /// <summary>
+    /// Client Password
+    /// </summary>
+    public string ClientSecret { get; set; }
 
-        /// <summary>
-        /// Client Password
-        /// </summary>
-        public string ClientSecret { get; set; }
+    public IList<string> GrantTypes { get; set; }
 
-        public IList<string> GrantType { get; set; }
+    /// <summary>
+    /// by default false
+    /// </summary>
+    public bool IsActive { get; set; } = false;
+    public IList<string> AllowedScopes { get; set; }
 
-        /// <summary>
-        /// by default false
-        /// </summary>
-        public bool IsActive { get; set; } = false;
-        public IList<string> AllowedScopes { get; set; }
+    public string ClientUri { get; set; }
+    public IList<string> RedirectUris { get; set; }
 
-        public string ClientUri { get; set; }
-        public string RedirectUri { get; set; }
+    public bool UsePkce { get; set; }
 
-        public bool UsePkce { get; set; }
+    /// <summary>
+    /// Get or set the name of the clients/protected resource that are releated to this Client.
+    /// </summary>
+    public IList<string> AllowedProtectedResources { get; set; }
     }
  ```
  ### How to register your Applications?
- As I said in the prevoius step, there is a class named **ClientStore** and this object has an property named **Clients** with IEnumerable of Client return type
- For example, to register one client you should do like so:
+ As I said in the prevoius step, there is a class named **ClientStore** and this object has an property named **Clients** which is IEnumerable of **Client** type
+ For example, to register one client you should do that like the following:
  ```C#
   public class ClientStore
     {
