@@ -363,7 +363,7 @@ namespace OAuth20.Server.Services
 
         private bool codeVerifierIsSendByTheClientThatReceivedTheCode(string codeVerifier, string codeChallenge, string codeChallengeMethod)
         {
-            var odeVerifireAsByte = Encoding.ASCII.GetBytes(codeVerifier);
+            var codeVerifiedAsByte = Encoding.ASCII.GetBytes(codeVerifier);
 
             if (codeChallengeMethod == Constants.ChallengeMethod.Plain)
             {
@@ -374,7 +374,7 @@ namespace OAuth20.Server.Services
             {
 
                 using var shaS256 = SHA256.Create();
-                var computedHashS256 = shaS256.ComputeHash(odeVerifireAsByte);
+                var computedHashS256 = shaS256.ComputeHash(codeVerifiedAsByte);
                 var tranformedResultS256 = Base64UrlEncoder.Encode(computedHashS256);
 
                 return tranformedResultS256.Equals(codeChallenge);
