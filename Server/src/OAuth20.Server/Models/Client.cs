@@ -42,5 +42,10 @@ namespace OAuth20.Server.Models
         /// Get or set the name of the clients/protected resource that are releated to this Client.
         /// </summary>
         public IList<string> AllowedProtectedResources { get; set; }
+
+        /// <summary>
+        /// Get or set the refresh token.
+        /// </summary>
+        public bool SupportRefreshToken { get; set; }
     }
 }

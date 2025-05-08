@@ -82,10 +82,9 @@ namespace OAuth20.Server.Services.Users
 
             if (!validationResult)
             {
-                _logger.LogInformation("The create user request is failed please check your input {request}", request);
+                _logger.LogError("The create user request validation process is failed for {request}.", request);
                 return new CreateUserResponse { Error = "The create user request is failed please check your input" };
             }
-
 
             var user = new AppUser
             {
@@ -113,20 +112,20 @@ namespace OAuth20.Server.Services.Users
             bool validationResult = validateOpenIdLoginRequest(request);
             if (!validationResult)
             {
-                _logger.LogInformation("login process is failed for request: {request}", request);
+                _logger.LogError("login validation process is failed for request: {request}", request);
                 return new OpenIdConnectLoginResponse { Error = "The login process is failed" };
             }
 
             AppUser user = null;
 
             user = await _userManager.FindByNameAsync(request.UserName);
-            if (user == null && request.UserName.Contains("@"))
+            if (user == null && request.UserName.Contains('@'))
                 user = await _userManager.FindByEmailAsync(request.UserName);
 
             if (user == null)
             {
-                _logger.LogInformation("creditioanl {userName}", request.UserName);
-                return new OpenIdConnectLoginResponse { Error = "No user has this creditioanl" };
+                _logger.LogError("user {userName} is not found in the database.", request.UserName);
+                return new OpenIdConnectLoginResponse { Error = "No user has this information" };
             }
 
             await _signInManager.SignOutAsync();
@@ -146,27 +145,23 @@ namespace OAuth20.Server.Services.Users
         #region Helper Functions
         private bool validateLoginRequest(LoginRequest request)
         {
-            if (request.UserName == null || request.Password == null)
-                return false;
-
-            if (request.Password.Length < 8)
-                return false;
-
-            return true;
+            return !string.IsNullOrEmpty(request.UserName) &&
+                   !string.IsNullOrEmpty(request.Password) &&
+                    request.Password.Length >= _userManager.Options.Password.RequiredLength;
         }
 
         private bool validateOpenIdLoginRequest(OpenIdConnectLoginRequest request)
         {
-            if (request.Code == null || request.UserName == null || request.Password == null)
-                return false;
-            return true;
+            return !string.IsNullOrEmpty(request.Code) &&
+                   !string.IsNullOrEmpty(request.UserName) &&
+                   !string.IsNullOrEmpty(request.Password);
         }
 
         private bool validateCreateUserRequest(CreateUserRequest request)
         {
-            if (request.UserName == null || request.Password == null || request.Email == null)
-                return false;
-            return true;
+            return !string.IsNullOrEmpty(request.UserName) &&
+                   !string.IsNullOrEmpty(request.Password) &&
+                   !string.IsNullOrEmpty(request.Email);
         }
 
         #endregion

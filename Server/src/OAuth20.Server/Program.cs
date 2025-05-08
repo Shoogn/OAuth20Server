@@ -54,7 +54,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 
 builder.Services.Configure<OAuthServerOptions>(configServices.GetSection("OAuthOptions"));
-builder.Services.AddScoped<IAuthorizeResultService, AuthorizeResultService>();
+builder.Services.AddScoped<IAuthorizeResultService, AuthorizeRequestService>();
 builder.Services.AddSingleton<ICodeStoreService, CodeStoreService>();
 builder.Services.AddScoped<IUserManagerService, UserManagerService>();
 builder.Services.AddScoped<ITokenRevocationService, TokenRevocationService>();
@@ -94,8 +94,5 @@ app.UseCors("UserInfoPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseSession();
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapDefaultControllerRoute();
-});
+app.MapDefaultControllerRoute();
 app.Run();

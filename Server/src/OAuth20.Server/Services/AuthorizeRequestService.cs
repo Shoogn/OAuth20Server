@@ -30,7 +30,7 @@ using System.Threading.Tasks;
 
 namespace OAuth20.Server.Services
 {
-    public class AuthorizeResultService : IAuthorizeResultService
+    public class AuthorizeRequestService : IAuthorizeResultService
     {
         // for encrypted key see: https://stackoverflow.com/questions/18223868/how-to-encrypt-jwt-security-token
         private readonly ICodeStoreService _codeStoreService;
@@ -39,7 +39,7 @@ namespace OAuth20.Server.Services
         private readonly BaseDBContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public AuthorizeResultService(ICodeStoreService codeStoreService,
+        public AuthorizeRequestService(ICodeStoreService codeStoreService,
             IClientService clientService,
             IOptions<OAuthServerOptions> options,
             BaseDBContext context,
@@ -61,28 +61,28 @@ namespace OAuth20.Server.Services
                 return response;
             }
 
-            var client = _clientService.VerifyClientById(authorizationRequest.client_id);
+            var client = _clientService.VerifyClientById(authorizationRequest.ClientId);
             if (!client.IsSuccess)
             {
                 response.Error = client.ErrorDescription;
                 return response;
             }
 
-            if (string.IsNullOrEmpty(authorizationRequest.response_type) || authorizationRequest.response_type != "code")
+            if (string.IsNullOrEmpty(authorizationRequest.ResponseType) || authorizationRequest.ResponseType != "code")
             {
                 response.Error = ErrorTypeEnum.InvalidRequest.GetEnumDescription();
                 response.ErrorDescription = "response type is required or is not valid";
                 return response;
             }
 
-            if (!authorizationRequest.redirect_uri.IsRedirectUriStartWithHttps() && !httpContextAccessor.HttpContext.Request.IsHttps)
+            if (!authorizationRequest.Redirecturi.IsRedirectUriStartWithHttps() && !httpContextAccessor.HttpContext.Request.IsHttps)
             {
                 response.Error = ErrorTypeEnum.InvalidRequest.GetEnumDescription();
                 response.ErrorDescription = "redirect url is not secure, MUST be TLS";
                 return response;
             }
 
-            if (client.Client.UsePkce && string.IsNullOrWhiteSpace(authorizationRequest.code_challenge))
+            if (client.Client.UsePkce && string.IsNullOrWhiteSpace(authorizationRequest.CodeChallenge))
             {
                 response.Error = ErrorTypeEnum.InvalidRequest.GetEnumDescription();
                 response.ErrorDescription = "code challenge required";
@@ -92,7 +92,7 @@ namespace OAuth20.Server.Services
             // check the return url is match the one that in the client store
 
             var uri = client.Client.RedirectUris
-                .Where(x => x.Contains(authorizationRequest.redirect_uri, StringComparison.OrdinalIgnoreCase))
+                .Where(x => x.Contains(authorizationRequest.Redirecturi, StringComparison.OrdinalIgnoreCase))
                 .FirstOrDefault();
             if (string.IsNullOrWhiteSpace(uri))
             {
@@ -104,7 +104,7 @@ namespace OAuth20.Server.Services
             // check the scope in the client store with the
             // one that is comming from the request MUST be matched at leaset one
 
-            var scopes = authorizationRequest.scope.Split(' ');
+            var scopes = authorizationRequest.Scope.Split(' ');
 
             var clientScopes = from m in client.Client.AllowedScopes
                                where scopes.Contains(m)
@@ -117,7 +117,7 @@ namespace OAuth20.Server.Services
                 return response;
             }
 
-            string nonce = authorizationRequest.nonce;
+            string nonce = authorizationRequest.Nonce;
 
             // Verify that a scope parameter is present and contains the openid scope value.
             // (If no openid scope value is present,
@@ -125,12 +125,12 @@ namespace OAuth20.Server.Services
 
             var authoCode = new AuthorizationCode
             {
-                ClientId = authorizationRequest.client_id,
-                RedirectUri = authorizationRequest.redirect_uri,
+                ClientId = authorizationRequest.ClientId,
+                RedirectUri = authorizationRequest.Redirecturi,
                 RequestedScopes = clientScopes.ToList(),
                 Nonce = nonce,
-                CodeChallenge = authorizationRequest.code_challenge,
-                CodeChallengeMethod = authorizationRequest.code_challenge_method,
+                CodeChallenge = authorizationRequest.CodeChallenge,
+                CodeChallengeMethod = authorizationRequest.CodeChallengeMethod,
                 CreationTime = DateTime.UtcNow,
                 Subject = httpContextAccessor.HttpContext.User //as ClaimsPrincipal
 
@@ -146,13 +146,13 @@ namespace OAuth20.Server.Services
             Dictionary<string, string> qs = new Dictionary<string, string>
             {
                 { "response_type", "code" },
-                { "state", authorizationRequest.state }
+                { "state", authorizationRequest.State }
             };
 
 
             response.RedirectUri = uri + QueryString.Create(qs);
             response.Code = code;
-            response.State = authorizationRequest.state;
+            response.State = authorizationRequest.State;
             response.RequestedScopes = clientScopes.ToList();
 
             return response;
