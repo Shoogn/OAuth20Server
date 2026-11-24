@@ -20,7 +20,9 @@ namespace OAuth20.Server.Models
 
         [Description("authorization_code")] AuthorizationCode,
 
-        [Description("urn:ietf:params:oauth:grant-type:device_code")] DeviceCode
-           
+        [Description("urn:ietf:params:oauth:grant-type:device_code")] DeviceCode,
+
+        [Description("urn:ietf:params:oauth:grant-type:token-exchange")] TokenExchange
+
     }
 }

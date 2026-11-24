@@ -9,6 +9,7 @@
 using OAuth20.Server.Common;
 using OAuth20.Server.Models;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System;
 using Microsoft.AspNetCore.Http;
@@ -73,19 +74,28 @@ namespace OAuth20.Server.Services
             if (!string.IsNullOrWhiteSpace(grantType) &&
                 grantType == AuthorizationGrantTypesEnum.ClientCredentials.GetEnumDescription())
             {
+                result.Error = ErrorTypeEnum.InvalidClient.GetEnumDescription();
+
                 var data = _httpContextAccessor.HttpContext;
                 var authHeader = data.Request.Headers["Authorization"].ToString();
-                if (authHeader == null)
-                    return result;
-                if (!authHeader.StartsWith("Basic", StringComparison.OrdinalIgnoreCase))
+                if (!authHeader.StartsWith("Basic ", StringComparison.OrdinalIgnoreCase))
                     return result;
 
-                var parameters = authHeader.Substring("Basic ".Length);
-                var authorizationKeys = Encoding.UTF8.GetString(Convert.FromBase64String(parameters));
+                string authorizationKeys;
+                try
+                {
+                    authorizationKeys = Encoding.UTF8.GetString(Convert.FromBase64String(authHeader.Substring("Basic ".Length).Trim()));
+                }
+                catch (FormatException)
+                {
+                    return result;
+                }
 
                 var authorizationResult = authorizationKeys.IndexOf(':');
                 if (authorizationResult == -1)
                     return result;
+
+                result.Error = null;
                 clientId = authorizationKeys.Substring(0, authorizationResult);
                 clientSecret = authorizationKeys.Substring(authorizationResult + 1);
 
@@ -103,12 +113,15 @@ namespace OAuth20.Server.Services
 
                 if (client != null)
                 {
-                    if (checkWithSecret && !string.IsNullOrEmpty(clientSecret))
+                    if (checkWithSecret)
                     {
-                        bool hasSamesecretId = client.ClientSecret.Equals(clientSecret, StringComparison.InvariantCulture);
-                        if (!hasSamesecretId)
+                        // a secret is mandatory when the caller asks for it
+                        bool hasSameSecret = !string.IsNullOrEmpty(clientSecret) && CryptographicOperations.FixedTimeEquals(
+                            Encoding.UTF8.GetBytes(client.ClientSecret ?? string.Empty), Encoding.UTF8.GetBytes(clientSecret));
+                        if (!hasSameSecret)
                         {
                             result.Error = ErrorTypeEnum.InvalidClient.GetEnumDescription();
+                            result.ErrorDescription = "client authentication failed";
                             return result;
                         }
                     }
@@ -123,13 +136,15 @@ namespace OAuth20.Server.Services
                     }
                     else
                     {
-                        result.ErrorDescription = ErrorTypeEnum.UnAuthoriazedClient.GetEnumDescription();
+                        result.Error = ErrorTypeEnum.UnAuthoriazedClient.GetEnumDescription();
+                        result.ErrorDescription = "client is not active";
                         return result;
                     }
                 }
             }
 
-            result.ErrorDescription = ErrorTypeEnum.AccessDenied.GetEnumDescription();
+            result.Error = ErrorTypeEnum.InvalidClient.GetEnumDescription();
+            result.ErrorDescription = "unknown client";
             return result;
         }
 

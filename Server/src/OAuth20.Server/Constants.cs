@@ -50,5 +50,10 @@
             public const string FormEncodedBodyParameter = "access_token";
             public const string UriQueryParameter = "access_token";
         }
+
+        public static class OAuth2JwtConstants
+        {
+            public const string CurrentKeyId = "main-key";
+        }
     }
 }

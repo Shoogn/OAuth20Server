@@ -27,5 +27,7 @@ namespace OAuth20.Server.Models
                 AuthorizationGrantTypesEnum.Code.GetEnumDescription() };
         public static IList<string> DeviceCode =>
             new[] { AuthorizationGrantTypesEnum.DeviceCode.GetEnumDescription() };
+        public static IList<string> TokenExchange =>
+            new[] { AuthorizationGrantTypesEnum.TokenExchange.GetEnumDescription() };
     }
 }

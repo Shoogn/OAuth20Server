@@ -51,11 +51,8 @@ public class DeviceAuthorizationService : IDeviceAuthorizationService
                 data.UserInterActionComplete = true;
                 _dbContext.Update(data);
                 var result = await _dbContext.SaveChangesAsync();
-                if (result > 0)
-                {
-                    return true;
-                }
-                return false;
+
+                return result > 0 ? true : false;
             }
             return false;
         }
@@ -84,7 +81,7 @@ public class DeviceAuthorizationService : IDeviceAuthorizationService
 
         };
 
-        // Store the responst in the back store (sql server in my case)
+        // Store the response in the back store (sql server in my case)
         var deviceflowEntity = new DeviceFlowEntity
         {
             ClientId = validationResult.Client.ClientId,

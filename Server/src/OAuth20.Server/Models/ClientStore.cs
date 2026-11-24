@@ -71,6 +71,16 @@ namespace OAuth20.Server.Models
                 AllowedScopes = new[]{ "consoledeviceapp.read", "consoledeviceapp.wite", "consoledeviceapp.readandwrite" },
                 GrantTypes = GrantTypes.DeviceCode,
                 IsActive = true,
+            },
+              new Client
+            {
+                ClientName = "tokenexchangeapp",
+                ClientId = "5",
+                ClientSecret = "123456789",
+                AllowedScopes = new[]{ "jwtapitestapp.read", "jwtapitestapp.wite", "jwtapitestapp.readandwrite" },
+                GrantTypes = GrantTypes.TokenExchange,
+                IsActive = true,
+                ClientUri = "https://localhost:7100",
             }
         };
     }

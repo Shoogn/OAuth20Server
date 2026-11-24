@@ -10,10 +10,12 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OAuth20.Server.Configuration;
+using OAuth20.Server.Infrastructure;
 using OAuth20.Server.Models;
 using OAuth20.Server.Models.Context;
 using OAuth20.Server.OauthRequest;
 using OAuth20.Server.OauthResponse;
+using OAuth20.Server.Services.Interfaces;
 using OAuth20.Server.Validations;
 using System;
 using System.Collections.Generic;
@@ -32,16 +34,23 @@ namespace OAuth20.Server.Services
         private readonly ILogger<TokenIntrospectionService> _logger;
         private readonly BaseDBContext _dbContext;
         private readonly OAuthServerOptions _optionsMonitor;
+        private readonly ISigningKeyStore _signingKeyStore;
+        private readonly IOAuth2JwtDecoder _oAuth2JwtDecoder;
         public TokenIntrospectionService(
             ITokenIntrospectionValidation tokenIntrospectionValidation,
             ILogger<TokenIntrospectionService> logger,
             BaseDBContext dbContext,
-            IOptionsMonitor<OAuthServerOptions> optionsMonitor
+            IOptionsMonitor<OAuthServerOptions> optionsMonitor,
+            ISigningKeyStore signingKeyStore,
+            IOAuth2JwtDecoder oAuth2JwtDecoder
+
             )
         {
             _tokenIntrospectionValidation = tokenIntrospectionValidation;
             _logger = logger;
             _dbContext = dbContext;
+            _signingKeyStore = signingKeyStore;
+            _oAuth2JwtDecoder = oAuth2JwtDecoder;
             _optionsMonitor = optionsMonitor.CurrentValue ?? new OAuthServerOptions();
         }
 
@@ -54,18 +63,18 @@ namespace OAuth20.Server.Services
 
             else
             {
-                RSACryptoServiceProvider provider = new RSACryptoServiceProvider();
-                string publicPrivateKey = File.ReadAllText("PublicPrivateKey.xml");
-                provider.FromXmlString(publicPrivateKey);
+                // validate to token
+                var decodeToken = _oAuth2JwtDecoder.Decode(tokenIntrospectionRequest.Token);
+                RSA publicKey = _signingKeyStore.GetPublicKey(decodeToken.Header.Kid);
+                RsaSecurityKey rsaSecurityKey = new RsaSecurityKey(publicKey);
 
-                RsaSecurityKey rsaSecurityKey = new RsaSecurityKey(provider);
                 JwtSecurityTokenHandler jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
                 JwtSecurityToken jwtSecurityToken = jwtSecurityTokenHandler.ReadJwtToken(tokenIntrospectionRequest.Token);
 
                 TokenValidationParameters tokenValidationParameters = new TokenValidationParameters();
 
                 tokenValidationParameters.IssuerSigningKey = rsaSecurityKey;
-                tokenValidationParameters.ValidAudiences = jwtSecurityToken.Audiences;
+                tokenValidationParameters.ValidAudiences = jwtSecurityToken.Audiences; //  validationResult.Client.ClientId;
                 tokenValidationParameters.ValidTypes = new[] { "JWT" };
                 tokenValidationParameters.ValidateIssuer = true;
                 tokenValidationParameters.ValidIssuer = _optionsMonitor.IDPUri;
@@ -73,10 +82,14 @@ namespace OAuth20.Server.Services
                 tokenValidationParameters.AudienceValidator = ValidateAudienceHandler(jwtSecurityToken.Audiences, jwtSecurityToken,
                     tokenValidationParameters, validationResult.Client, tokenIntrospectionRequest.Token);
 
+
+                tokenValidationParameters.ValidateLifetime = true;
+                tokenValidationParameters.ClockSkew = TimeSpan.FromMinutes(_optionsMonitor.ClockSkew.Value.TotalMinutes);
+
                 try
                 {
                     var tokenValidationReslt = await jwtSecurityTokenHandler.ValidateTokenAsync(tokenIntrospectionRequest.Token, tokenValidationParameters);
-
+                 
                     if (tokenValidationReslt.IsValid)
                     {
                         //int exp = (int)jwtSecurityToken.ValidTo.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
@@ -85,7 +98,7 @@ namespace OAuth20.Server.Services
                         string aud = (tokenValidationReslt.Claims.FirstOrDefault(x => x.Key == "aud").Value).ToString();
 
                         response.Active = true;
-                        response.TokenType = "access_token";
+                        response.TokenType = "access_token"; // JWT is used as Access Token in this implementation.
                         response.Exp = exp;
                         response.Iat = (int)jwtSecurityToken.IssuedAt.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
                         response.Iss = _optionsMonitor.IDPUri;
