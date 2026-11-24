@@ -7,12 +7,22 @@
  */
 
 using Microsoft.AspNetCore.Mvc;
+using OAuth20.Server.Infrastructure;
 using OAuth20.Server.OauthResponse;
+using OAuth20.Server.Services.Interfaces;
+using System.Buffers.Text;
+using System.Security.Cryptography;
+using static OAuth20.Server.Constants;
 
 namespace OAuth20.Server.Controllers
 {
     public class DiscoveryEndpointController : Controller
     {
+        private readonly ISigningKeyStore _signingKeyStore;
+        public DiscoveryEndpointController(ISigningKeyStore signingKeyStore)
+        {
+            _signingKeyStore = signingKeyStore;
+        }
         // .well-known/openid-configuration
         [HttpGet("~/.well-known/openid-configuration")]
         public JsonResult GetConfiguration()
@@ -53,10 +63,29 @@ namespace OAuth20.Server.Controllers
 
         // jwks.json
         [HttpGet("~/jwks.json")]
-        public FileResult Jwks()
+        public IActionResult Jwks()
         {
-            string path = "wwwroot/jwks.json";
-            return File(path, System.Net.Mime.MediaTypeNames.Application.Json);
+            var rsa = _signingKeyStore.GetPublicKey(OAuth2JwtConstants.CurrentKeyId);
+
+            RSAParameters p = rsa.ExportParameters(false);
+
+            return Ok(new
+            {
+                keys = new[]
+                {
+            new
+            {
+                kty = "RSA",
+                use = "sig",
+                alg = "RS256",
+                kid = _signingKeyStore.KeyId,
+                n = OAuth2Base64Url.Encode(p.Modulus),
+                e = OAuth2Base64Url.Encode(p.Exponent)
+            }
+        }
+            });
+            //string path = "wwwroot/jwks.json";
+            //return File(path, System.Net.Mime.MediaTypeNames.Application.Json);
         }
     }
 }

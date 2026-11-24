@@ -30,6 +30,11 @@ namespace OAuth20.Server.OauthResponse
         public string token_type { get; set; } = TokenTypeEnum.Bearer.GetEnumDescription();
 
         /// <summary>
+        /// Token exchange (RFC 8693) only: the type of the issued token.
+        /// </summary>
+        public string issued_token_type { get; set; }
+
+        /// <summary>
         /// Authorization Code. This is always returned when using the Hybrid Flow.
         /// </summary>
         public string code { get; set; }

@@ -32,8 +32,10 @@ namespace OAuth20.Server.Models.Entities
         /// <summary>
         /// I will use snakflowId here
         /// <see cref="https://github.com/Shoogn/SnowflakeId"/> for more details
+        /// I have to validate it to equal jti 
+        /// instead of using the hole token for token revocation and introspection to make it more efficient
         /// </summary>
-        public string ReferenceId { get; set; }
+        public string ReferenceId { get; set; } 
 
         public string TokenType { get; set; }
         public string TokenTypeHint { get; set; }

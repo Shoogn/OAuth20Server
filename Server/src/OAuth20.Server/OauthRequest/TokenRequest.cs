@@ -36,5 +36,24 @@ namespace OAuth20.Server.OauthRequest
 
         [JsonPropertyName("device_code")]
         public string device_code { get; set; }
+
+        // RFC 8693 token exchange
+        [JsonPropertyName("subject_token")]
+        public string subject_token { get; set; }
+
+        [JsonPropertyName("subject_token_type")]
+        public string subject_token_type { get; set; }
+
+        [JsonPropertyName("actor_token")]
+        public string actor_token { get; set; }
+
+        [JsonPropertyName("actor_token_type")]
+        public string actor_token_type { get; set; }
+
+        [JsonPropertyName("requested_token_type")]
+        public string requested_token_type { get; set; }
+
+        [JsonPropertyName("audience")]
+        public string audience { get; set; }
     }
 }

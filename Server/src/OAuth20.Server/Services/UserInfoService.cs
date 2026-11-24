@@ -11,7 +11,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OAuth20.Server.Configuration;
+using OAuth20.Server.Infrastructure;
 using OAuth20.Server.OAuthResponse;
+using OAuth20.Server.Services.Interfaces;
 using OAuth20.Server.Services.Users;
 using OAuth20.Server.Validations;
 using System;
@@ -30,25 +32,29 @@ public interface IUserInfoService
 }
 public class UserInfoService : IUserInfoService
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IBearerTokenUsageTypeValidation _bearerTokenUsageTypeValidation;
     private readonly OAuthServerOptions _optionsMonitor;
     private readonly IClientService _clientService;
     private readonly IUserManagerService _userManagerService;
+    private readonly ISigningKeyStore _signingKeyStore;
+    private readonly IOAuth2JwtDecoder _oAuth2JwtDecoder;
     private readonly ILogger<UserInfoService> _logger;
 
-    public UserInfoService(IHttpContextAccessor httpContextAccessor,
+    public UserInfoService(
          IBearerTokenUsageTypeValidation bearerTokenUsageTypeValidation,
          IOptionsMonitor<OAuthServerOptions> optionsMonitor,
          IClientService clientService,
          IUserManagerService userManagerService,
+         ISigningKeyStore signingKeyStore,
+         IOAuth2JwtDecoder oAuth2JwtDecoder,
          ILogger<UserInfoService> logger)
     {
-        _httpContextAccessor = httpContextAccessor;
         _bearerTokenUsageTypeValidation = bearerTokenUsageTypeValidation;
         _optionsMonitor = optionsMonitor.CurrentValue ?? new OAuthServerOptions();
         _clientService = clientService;
         _userManagerService = userManagerService;
+        _signingKeyStore = signingKeyStore;
+        _oAuth2JwtDecoder = oAuth2JwtDecoder;
         _logger = logger;
     }
 
@@ -63,24 +69,21 @@ public class UserInfoService : IUserInfoService
             response.Succeeded = false;
             response.Error = "no token found";
             response.ErrorDescription = "Make sure to add the token as bearer to Authentication header in the request";
-
-
         }
         else
         {
             // validate to token
-            RSACryptoServiceProvider provider = new RSACryptoServiceProvider();
-            string publicPrivateKey = File.ReadAllText("PublicPrivateKey.xml");
-            provider.FromXmlString(publicPrivateKey);
-            RsaSecurityKey rsaSecurityKey = new RsaSecurityKey(provider);
+            var decodeToken = _oAuth2JwtDecoder.Decode(bearerTokenUsages.Token);
+            RSA publicKey = _signingKeyStore.GetPublicKey(decodeToken.Header.Kid);
+            RsaSecurityKey rsaSecurityKey = new RsaSecurityKey(publicKey);
+
+
             JwtSecurityTokenHandler jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
             JwtSecurityToken jwtSecurityToken = jwtSecurityTokenHandler.ReadJwtToken(bearerTokenUsages.Token);
 
             var aud = jwtSecurityToken.Audiences.FirstOrDefault();
             var client = await _clientService.GetClientByUriAsync(aud);
             
-
-
             // TODO:
             // check if client is null.
             // check if client is not active.

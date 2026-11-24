@@ -18,8 +18,11 @@ using OAuth20.Server.Models.Context;
 using OAuth20.Server.Models.Entities;
 using OAuth20.Server.Services;
 using OAuth20.Server.Services.CodeService;
+using OAuth20.Server.Services.Grants;
+using OAuth20.Server.Services.Interfaces;
 using OAuth20.Server.Services.Users;
 using OAuth20.Server.Validations;
+using OAuth20.Server.Validations.Interfaces;
 using System;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -66,6 +69,13 @@ builder.Services.AddScoped<IUserInfoService, UserInfoService>();
 builder.Services.AddScoped<IBearerTokenUsageTypeValidation, BearerTokenUsageTypeValidation>();
 builder.Services.AddScoped<IDeviceAuthorizationValidation, DeviceAuthorizationValidation>();
 builder.Services.AddScoped<IDeviceAuthorizationService, DeviceAuthorizationService>();
+builder.Services.AddSingleton<ISigningKeyStore,  SigningKeyStore>();
+builder.Services.AddScoped<ITokenIssuer, TokenIssuer>();
+builder.Services.AddScoped<IGrantHandler, AuthorizationCodeGrantHandler>();
+builder.Services.AddScoped<IGrantHandler, ClientCredentialsGrantHandler>();
+builder.Services.AddScoped<IGrantHandler, DeviceCodeGrantHandler>();
+builder.Services.AddScoped<IGrantHandler, TokenExchangeGrantHandler>();
+builder.Services.AddScoped<IGenerateTokenRequestValidation, GenerateTokenRequestValidation>();
 
 builder.Services.AddHttpContextAccessor();
 
